@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Ahmad Al-Shishtawy - Analytics</title>
+        <link rel="stylesheet" href="https://alshishtawy.github.io/theme/css/main.css" />
+        <link href="https://alshishtawy.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Ahmad Al-Shishtawy Atom Feed" />
+</head>
+
+<body id="index" class="home">
+<a href="https://github.com/alshishtawy/alshishtawy.github.io/tree/source">
+<img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" />
+</a>
+        <header id="banner" class="body">
+                <h1><a href="https://alshishtawy.github.io/">Ahmad Al-Shishtawy <strong>Senior Researcher, PhD</strong></a></h1>
+                <nav><ul>
+                    <li><a href="https://alshishtawy.github.io/">Bio</a></li>
+                    <li><a href="https://alshishtawy.github.io/pages/about-me.html">About&nbsp;Me</a></li>
+                    <li><a href="https://alshishtawy.github.io/pages/publications-list.html">Publications</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+            <aside id="featured" class="body">
+                <article>
+                    <h1 class="entry-title"><a href="https://alshishtawy.github.io/traffic-flow-analysis.html">Traffic Flow Analysis with Spark: Getting Started&nbsp;Guide</a></h1>
+<footer class="post-info">
+        <abbr class="published" title="2017-10-13T00:00:00+02:00">
+                Published: Fri 13 October 2017
+        </abbr>
+		<br />
+        <abbr class="modified" title="2017-10-13T00:00:00+02:00">
+                Updated: Fri 13 October 2017
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://alshishtawy.github.io/author/ahmad-al-shishtawy.html">Ahmad Al-Shishtawy</a>
+        </address>
+<p>In <a href="https://alshishtawy.github.io/category/guides.html">Guides</a>.</p>
+<p>tags: <a href="https://alshishtawy.github.io/tag/spark.html">Spark</a> <a href="https://alshishtawy.github.io/tag/big-data.html">Big Data</a> <a href="https://alshishtawy.github.io/tag/traffic-flow.html">Traffic Flow</a> <a href="https://alshishtawy.github.io/tag/analytics.html">Analytics</a> <a href="https://alshishtawy.github.io/tag/jupyter.html">Jupyter</a> </p>
+</footer><!-- /.post-info --><img alt="Traffic Flow Analysis" class="align-center" src="https://alshishtawy.github.io/images/traffic_flow.png" style="width: 90%;" />
+<p>This guide will help you get started with traffic flow analysis of sensor data from Motorway Control Systems (<span class="caps">MCS</span>) using&nbsp;Spark.</p>
+<p>To get started, download the Jupyter Notebook and the sample data from the links below. Run the Notebook in Jupyter and follow it step by step as it walks you through the basic stages of data&nbsp;analytics.</p>
+<p>You can view a static version of the notebook here: <a class="reference external" href="https://alshishtawy.github.io/static/Traffic_Flow_Analysis/Traffic_Flow_Analysis_with_Spark.html">Traffic Flow Analysis (Static&nbsp;Version)</a></p>
+<div class="section" id="setting-up-a-working-environment">
+<h2>Setting Up a Working&nbsp;Environment</h2>
+<p>If you don&#8217;t have access to a Spark and/or Jupyter installation. You can quickly get it up and running using Docker. We recommend using this <a class="reference external" href="https://github.com/jupyter/docker-stacks/tree/master/all-spark-notebook">Spark Docker image</a> that contains all the tools we need. Including, Spark, Jupyter, Python, Scala, and much&nbsp;more.</p>
+<p>Follow these&nbsp;steps:</p>
+<ol class="arabic simple">
+<li>Install&nbsp;Docker</li>
+<li>Create a folder (e.g., /home/myuser/work) and copy the Notebook and unzipped sample data folder&nbsp;there</li>
+<li>Run docker with the following command (<strong>replace</strong>  /home/myuser/work with your&nbsp;folder)</li>
+</ol>
+<div class="highlight"><pre><span></span>docker run -it --rm -p <span class="m">8888</span>:8888 --name mySpark -v /home/myuser/work:/home/jovyan/work jupyter/all-spark-notebook
+</pre></div>
+<p>This should start Spark and Jupyter. Take note of the authentication token included in the Jupyter startup log messages. Use this url in your browser to access&nbsp;Jupyter.</p>
+</div>
+<div class="section" id="resources">
+<h2>Resources</h2>
+<ul class="simple">
+<li><a class="reference external" href="https://alshishtawy.github.io/static/Traffic_Flow_Analysis/Traffic_Flow_Analysis_with_Spark.ipynb">Traffic Flow Analysis Jupyter&nbsp;Notebook</a></li>
+<li><a class="reference external" href="https://alshishtawy.github.io/static/Traffic_Flow_Analysis/data.zip">Sample&nbsp;Data</a></li>
+</ul>
+</div>
+                </article>
+            </aside><!-- /#featured -->
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="https://www.ri.se">RISE AB</a></li>
+                            <li><a href="https://www.sics.se/groups/computer-systems-laboratory-csl">Computer Systems Lab</a></li>
+                            <li><a href="https://www.ri.se/en/ahmad-al-shishtawy">My Page @ RISE</a></li>
+                            <li><a href="http://getpelican.com">Powered by Pelican</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://alshishtawy.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                            <li><a href="https://www.linkedin.com/in/alshishtawy">LinkedIn</a></li>
+                            <li><a href="https://twitter.com/alshishtawy">Twitter</a></li>
+                            <li><a href="https://github.com/alshishtawy/">Github</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+<!--
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address>--><!-- /#about -->
+
+<!--                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer>--><!-- /#contentinfo -->
+
+    <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-103785875-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+</body>
+</html>
