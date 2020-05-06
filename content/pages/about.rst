@@ -12,12 +12,16 @@ About Me
 
 Projects
 ========
+- **AnaRISE:** Big Data Analytics for Visualization of RISE Business, Internal RISE Project, 2020 - 2021.
+
+  Internal RISE digitalization project with a goal to make available, for employees and managers, a set of rich information and visualization tools for exploring the various activities, projects, people, and groups across RISE. The project is based on data driven analytics and NLP and uses automated ML pipelines to easily incorporate new data.}
+
 
 - Streamline_: Fast Reactive Analytics, EU funded ICT-16-2015 Big Bata research, 2015 - 2018.
 
   The goal of STREAMLINE is delivery of fast reactive analytics to be useful for a broad spectrum of problems including personalized recommendation, customer retention and of the targeted services. The approach to apply includes developing a high level declarative language for reducing the programming expertise of users and developing fast reactive machine learning technologies.
 
-- **ROSE**: **R**\ oll **O**\ ut **S**\ cenarios of **E**\ lectric Roads, 2018-2019.
+- **ROSE**: **R**\ oll **O**\ ut **S**\ cenarios of **E**\ lectric Roads, 2018 - 2019.
 
   The goal of the project is to identify road segments that are most suitable and economically viable to be converted to electric roads and to have a gradual roll out plan for electric roads on large Europe-scale network. In this project, we adopt a data driven approach to identify suitable road segments and propose roll out plan by analysing and fusing various traffic datasets to analyse driving pattern of individual vehicles. The vehicle positioning data available at Scania and Volvo provides information about driving pattern and fuel consumption and can thereby be analyzed  to identify suitable stretches. The project is a collaboration between RISE, Scania, Volvo Trucks, Chalmers University, and the Swedish Transport Agency.
 
@@ -31,7 +35,7 @@ Projects
 
   - `BADA overview presentation`_
   - `BADA website`_
-  
+
 - MC-Data: Multi-Cloud Data Management. Funded by `EIT Digital`_, 2013 - 2015.
 - `E2E Clouds`_: End-to-End Distributed Clouds. Funded by SSF_: Swedish Foundation for Strategic Research (RIT10-0043_),
   2011-2016.
@@ -284,4 +288,3 @@ MeetUps
     :alt: slides
     :height: 1em
     :target: {static}/pdfs/awards/Ahmad_Contrail2011.pdf
-

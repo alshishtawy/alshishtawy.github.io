@@ -58,9 +58,14 @@ Book Chapters
 
 Peer Reviewed Papers
 ====================
+- Zainab Abbas, Jon Reginbald Ivarsson, Ahmad Al-Shishtawy, and Vladimir Vlassov,
+  :colortitle:`"Scaling Deep Learning Models for Large Spatial Time-Series Forecasting,"`
+  2019 IEEE International Conference on Big Data (Big Data), Los Angeles, CA, USA, December 9-12, 2019.
+  |BigData2019_doi| |BigData2019_pdf| |BigData2019_bib|
+
 
 - Ahmad Al-Shishtawy, Juhee Bae, Mohamed-Rafik Bouguelia, Göran Falkman, Sarunas Girdzijauskas, Olof Gönerup, Anders Holst, Alexander Karlsson, Slawomir Nowaczyk, Sepideh Pashami, Alan Said, Amira A. Soliman El Hosary,
-  :colortitle:`"Eliciting Structures in Data,"` ACM IUI Intelligent User Interfaces Workshops, Los Angeles, USA, March 20, 2019. |IUIWS2019_pdf|
+  :colortitle:`"Eliciting Structures in Data,"` ACM IUI Intelligent User Interfaces Workshops, Los Angeles, USA, March 20, 2019. |IUIWS2019_pdf| |IUIWS2019_bib|
 
 - Zainab Abbas, Thorsteinn Thorri Sigurdsson, Ahmad Al-Shishtawy, and Vladimir Vlassov,
   :colortitle:`"Evaluation of the Use of Streaming Graph Processing Algorithms for Road Congestion Detection,"`
@@ -94,7 +99,7 @@ Peer Reviewed Papers
 
 - A. Al-Shishtawy and V. Vlassov, :colortitle:`"ElastMan: Autonomic Elasticity Manager for Cloud-Based Key-Value Stores,"` in
   Proceedings of the 22nd International Symposium on High-performance Parallel and Distributed Computing , HPDC ’13, pp.
-  115–116, New York, NY, USA, 2013. |HPDC2013_doi| |HPDC2013_pdf| |HPDC2013_bib| 
+  115–116, New York, NY, USA, 2013. |HPDC2013_doi| |HPDC2013_pdf| |HPDC2013_bib|
 
 - A. Arman, A. Al-Shishtawy, and V. Vlassov, :colortitle:`"Elasticity Controller for Cloud-Based Key-Value Stores,"` in
   Parallel and Distributed Systems (ICPADS), 2012 IEEE 18th International Conference on, pp. 268–275, Singapore, Dec
@@ -240,11 +245,20 @@ Links
 .. ======================================================
 .. Papers
 
-
-.. |IUIWS2019_doi| image:: {static}/images/doi.png
-    :alt: 10.1109/BDCloud.2018.00148
+.. |BigData2019_doi| image:: {static}/images/doi.png
+    :alt: 10.1109/BigData47090.2019.9005475
     :height: 1em
-    :target: https://doi.org/10.1109/BDCloud.2018.00148
+    :target: https://doi.org/10.1109/BigData47090.2019.9005475
+.. |BigData2019_pdf| image:: {static}/images/pdf.png
+    :alt: pdf
+    :height: 1em
+    :target: {static}/pdfs/publications/BigData2019_Scaling_Deep_Learning_Models_for_Large_Spatial_Time-Series_Forecasting.pdf
+.. |BigData2019_bib| image:: {static}/images/bibtex.png
+    :alt: bibtex
+    :height: 1em
+    :target: {static}/pdfs/publications/BigData2019_Scaling_Deep_Learning_Models_for_Large_Spatial_Time-Series_Forecasting.bib
+
+
 .. |IUIWS2019_pdf| image:: {static}/images/pdf.png
     :alt: pdf
     :height: 1em
@@ -252,7 +266,8 @@ Links
 .. |IUIWS2019_bib| image:: {static}/images/bibtex.png
     :alt: bibtex
     :height: 1em
-    :target: {static}/pdfs/publications/ISPA2018_Road_Congestion_Detection.bib
+    :target: {static}/pdfs/publications/IUI19WS-UIBK-4.bib
+
 
 .. |ISPA2018_doi| image:: {static}/images/doi.png
     :alt: 10.1109/BDCloud.2018.00148
