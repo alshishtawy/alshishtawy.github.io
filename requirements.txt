@@ -1,0 +1,13 @@
+# required to build
+pelican
+Markdown
+typogrify
+
+# to run tasks in tasks.py
+invoke
+
+# auto reload browser during development
+livereload
+
+# publish on GitHub Pages
+ghp-import
