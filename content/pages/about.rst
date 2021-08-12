@@ -61,59 +61,45 @@ Master Thesis Supervision
 =========================
 
 - :colortitle:`WinBro: A Window and Broadcast-based Parallel Streaming Graph Partitioning Framework for Apache Flink`,
-
   by Adrian Ackva, 2019. |Adrian.A|
 
 - :colortitle:`An evaluation of deep neural network approaches for traffic speed prediction`,
-
   by Cosar Ghandeharioon, 2018. |Cosar.G|
 
 - :colortitle:`Scalable System-Wide Traffic Flow Predictions Using Graph Partitioning and Recurrent Neural Networks`,
-
   by Jon Reginbald Ivarsson, 2018. |Jon.R|
 
 - :colortitle:`Road traffic congestion detection and tracking with Spark Streaming analytics`,
-
   by Thorsteinn Thorri Sigurdsson, 2018. |Thor.T|
 
 - :colortitle:`Detection and Classification of Anomalies in Road Traffic using Spark Streaming`,
-
   by Nathan Adolfo Consuegra, 2018. |Nathan.A|
 
 - :colortitle:`Topology-Aware Placement of Stream Processing Components on Geographically Distributed Virtualized Environments`,
-
   by Ken Danniswara, 2015. |Ken.D|
 
 - :colortitle:`Self-trained Proactive Elasticity Manager for Cloud-based Storage Services`,
-
   by David Daharewa Gureya, 2015. |David.G|
 
 - :colortitle:`Automated Control of Elasticity for a Cloud-Based Key-Value Store`,
-
   by Ala Arman, 2012. |Ala.A|
 
 - :colortitle:`Self Tuning for Elastic Storage in Cloud Environment`,
-
   by M. Amir Moulavi, 2011. |Amir.M|
 
 - :colortitle:`Robust Fault-Tolerant Majority Based Key-Value Data Store Supporting Multiple Data Consistency`,
-
   by Tareq Jamal Khan, 2011. |Tarek.K|
 
 - :colortitle:`Achieving Robust Self Management for Large Scale Distributed Applications using Management Elements`,
-
   by Muhammad Asif Fayyaz, 2010. |Asif.F|
 
 - :colortitle:`Distributed Control Loop Patterns for Managing Distributed Applications`,
-
   by Mudassar Majeed, 2009.
 
 - :colortitle:`Evaluation of Approaches to Policy-Based Management in Self-Managing Distributed Systems`,
-
   by Lin Bao, 2009.
 
 - :colortitle:`Multi-Binding and Component Mobility Support`,
-
   by Rizwan Ahmed, 2009.
 
 
