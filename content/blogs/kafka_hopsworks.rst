@@ -135,8 +135,8 @@ After successfully entering your password, two certificate files will be downloa
     :width: 100%
     :align: center
 
-Next we'll convert the JKS keyStore into an intermediate PKCS#12 keyStore, then into PEM file.
-You will be asked to enter a new password for the generated certificates and the certificate password from the previous step.
+Next, we'll convert the JKS keyStore into an intermediate PKCS#12 keyStore, then into PEM file.
+You will be asked to enter a new password for each of the generated certificates and also the original certificate password you got from the previous step.
 
 .. code-block:: bash
 
@@ -145,7 +145,32 @@ You will be asked to enter a new password for the generated certificates and the
       -srcstoretype jks \
       -deststoretype pkcs12
 
+.. container:: terminal
+
+ ::
+
+   $ keytool -importkeystore -srckeystore keyStore.jks -destkeystore keyStore.p12 -srcstoretype jks -deststoretype pkcs12
+   Importing keystore keyStore.jks to keyStore.p12...
+   Enter destination keystore password:
+   Re-enter new password:
+   Enter source keystore password:
+   Entry for alias kafka_tutorial__meb10000 successfully imported.
+   Import command completed:  1 entries successfully imported, 0 entries failed or cancelled
+
+.. code-block:: bash
+
    openssl pkcs12 -in keyStore.p12 -out keyStore.pem
+
+.. container:: terminal
+
+ ::
+
+   $ openssl pkcs12 -in keyStore.p12 -out keyStore.pem
+   Enter Import Password:
+   Enter PEM pass phrase:
+   Verifying - Enter PEM pass phrase:
+   $ ls
+   keyStore.jks  keyStore.p12  keyStore.pem  trustStore.jks
 
 We repeat the same steps for the trustStore.
 
@@ -156,7 +181,31 @@ We repeat the same steps for the trustStore.
       -srcstoretype jks \
       -deststoretype pkcs12
 
+
+.. container:: terminal
+
+ ::
+
+    $ keytool -importkeystore -srckeystore trustStore.jks -destkeystore trustStore.p12 -srcstoretype jks -deststoretype pkcs12
+    Importing keystore trustStore.jks to trustStore.p12...
+    Enter destination keystore password:
+    Re-enter new password:
+    Enter source keystore password:
+    Entry for alias hops_root_ca successfully imported.
+    Import command completed:  1 entries successfully imported, 0 entries failed or cancelled
+
+.. code-block:: bash
+
    openssl pkcs12 -in trustStore.p12 -out trustStore.pem
+
+.. container:: terminal
+
+ ::
+
+   $ openssl pkcs12 -in trustStore.p12 -out trustStore.pem
+   Enter Import Password:
+   $ ls
+   keyStore.jks  keyStore.p12  keyStore.pem  trustStore.jks  trustStore.p12  trustStore.pem
 
 Now you should have ``keyStore.pem`` and ``trustStore.pem`` that we'll use in the rest of this tutorial. You can safely delete the intermediate ``.p12`` files.
 

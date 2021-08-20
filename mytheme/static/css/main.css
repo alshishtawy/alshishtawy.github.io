@@ -106,7 +106,15 @@ dl {margin: 0 0 1.5em 0;}
 dt {font-weight: bold;}
 dd {margin-left: 1.5em;}
 
-pre{background-color:  rgb(238, 238, 238); padding: 10px; margin: 10px; overflow: auto;}
+div.highlight pre{background-color:  rgb(238, 238, 238); padding: 10px; margin: 10px; overflow: auto;}
+
+/* highlight for formating terminal output */
+div.terminal {background-color:  #000000; padding: 10px; margin: 10px; overflow: auto;
+	      color: #fefbf3;
+	      /* display: block;
+	      font-family: monospace;
+	      white-space: pre; */
+	     }
 
 /* Quotes */
 blockquote {
@@ -473,7 +481,7 @@ li:last-child .hentry, #content > .hentry {border: 0; margin: 0;}
 /* Other: Highlight */
 
 .section>h2 {padding: 12px; background: #000000; color:#FFFFFF}
-.section>h3 {padding: 12px; background: #F5F5F5}
+.section>h3 {padding: 12px; background: #F5F4EF}
 
 /*
 .section>p>strong {background: rgb(238, 238, 238); color:#8B0000}
