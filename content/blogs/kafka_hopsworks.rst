@@ -123,10 +123,11 @@ You will be asked to enter your login password before downloading.
     :width: 100%
     :align: center
 
-After successfully entering your password, two certificate files will be downloaded, trustStore.jks and keyStore.jks. The certificate password will be displayed. it's a long string that similar to: ``MQJNW833YNBR9C0OZYGBGAB09P2PP4H5EHIALGWIT98I2PNSPTIXFCEI72FT0VLE``
+After successfully entering your password, two certificate files will be downloaded, trustStore.jks and keyStore.jks. The certificate password will be displayed. It's a long string that is similar to:
+  ``MQJNW833YNBR9C0OZYGBGAB09P2PP4H5EHIALGWIT98I2PNSPTIXFCEI72FT0VLE``
 
 .. important::
-   Store these two files in a safe place as they give remote access to your project and data. Same goes for the password. Copy and save it is a safe location as we'll need it later.
+   Store these two files in a safe place as they give remote access to your project and data. Same goes for the password. Copy and save your password in a safe location as we'll need it later.
 
 
 
@@ -212,16 +213,32 @@ Now you should have ``keyStore.pem`` and ``trustStore.pem`` that we'll use in th
 
 API Key
 -------
+Hopsworks provides a rich `REST API <https://app.swaggerhub.com/apis-docs/logicalclocks/hopsworks-api>`_ to interact with most of the available services. One of these services is the *Schema Registry* that we'll be using in this tutorial. To access the *REST API* we'll need an *API Key*.
+
+To create a new API Key associated with your account, open your user account settings.
 
 .. image:: {static}/images/kafka/account_settings.png
     :alt: Account Settings
     :width: 100%
     :align: center
 
+
+Select the API Keys tab. Give your key a name and select the services that the app using this key can access. Then click on *Create API Key*.
+
 .. image:: {static}/images/kafka/account_settings_api_key_1.png
     :alt: Account Settings - API Keys tab
     :width: 100%
     :align: center
+
+Copy and store your new key in a safe plase as this is the only time it will be displayed. If you loose your API Key you'll have to delete it and create a new one.
+
+Your API Key will look somethin like this:
+
+  ``K97n09yskcBuuFyO.scfQegUMhXfHg7v3Tpk8t6HIPUlmIP463BPdbTSdSEKAfo5AB8SIwY8LGgB4924B``
+
+.. important::
+
+   Store your API Key in a text file (e.g., apiKeyFile) next to your certificates. We'll use this file later to configure clients.
 
 .. image:: {static}/images/kafka/account_settings_api_key_2.png
     :alt: Creating an API Key
@@ -229,29 +246,24 @@ API Key
     :align: center
 
 
+Project Name and ID
+-------------------
 
+The final piece if information we need is the project name and ID. You will find this in your project settings tab.
 
-
-API
-K97n09yskcBuuFyO.scfQegUMhXfHg7v3Tpk8t6HIPUlmIP463BPdbTSdSEKAfo5AB8SIwY8LGgB4924B
-
-.. code-block:: python
-
-   import hops
-
-   x = 5
-   y = x + 5
-   print(y)
-
-.. note::
-   This is an important note
-
-.. image:: {static}/images/SpanEdge.png
-    :alt: ElastMan logo
+.. image:: {static}/images/kafka/project_settings_name_id.png
+    :alt: Exporting project certificates (2/2)
     :width: 100%
     :align: center
 
 
+
+Avro Client
+===========
+The source code at `Kafka Hopsworks Examples <https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka>`_
+
+Avro Producer
+-------------
 
 Source Code
 ===========
