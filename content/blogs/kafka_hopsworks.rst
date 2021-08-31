@@ -141,7 +141,7 @@ You will be asked to enter a new password for each of the generated certificates
 
 .. code-block:: bash
 
-   keytool -importkeystore -srckeystore keyStore.jks \
+   $ keytool -importkeystore -srckeystore keyStore.jks \
       -destkeystore keyStore.p12 \
       -srcstoretype jks \
       -deststoretype pkcs12
@@ -160,7 +160,7 @@ You will be asked to enter a new password for each of the generated certificates
 
 .. code-block:: bash
 
-   openssl pkcs12 -in keyStore.p12 -out keyStore.pem
+   $ openssl pkcs12 -in keyStore.p12 -out keyStore.pem
 
 .. container:: terminal
 
@@ -177,15 +177,15 @@ We repeat the same steps for the trustStore.
 
 .. code-block:: bash
 
-   keytool -importkeystore -srckeystore trustStore.jks \
+   $ keytool -importkeystore -srckeystore trustStore.jks \
       -destkeystore trustStore.p12 \
       -srcstoretype jks \
       -deststoretype pkcs12
 
 
-.. container:: terminal
+.. class:: terminal
 
- ::
+::
 
     $ keytool -importkeystore -srckeystore trustStore.jks -destkeystore trustStore.p12 -srcstoretype jks -deststoretype pkcs12
     Importing keystore trustStore.jks to trustStore.p12...
@@ -197,11 +197,11 @@ We repeat the same steps for the trustStore.
 
 .. code-block:: bash
 
-   openssl pkcs12 -in trustStore.p12 -out trustStore.pem
+   $ openssl pkcs12 -in trustStore.p12 -out trustStore.pem
 
-.. container:: terminal
+.. class:: terminal
 
- ::
+::
 
    $ openssl pkcs12 -in trustStore.p12 -out trustStore.pem
    Enter Import Password:
@@ -252,7 +252,7 @@ Project Name and ID
 The final piece if information we need is the project name and ID. You will find this in your project settings tab.
 
 .. image:: {static}/images/kafka/project_settings_name_id.png
-    :alt: Exporting project certificates (2/2)
+    :alt: Project Name and ID
     :width: 100%
     :align: center
 
@@ -260,16 +260,88 @@ The final piece if information we need is the project name and ID. You will find
 
 Avro Client
 ===========
-The source code at `Kafka Hopsworks Examples <https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka>`_
+Now we are ready for some coding. We'll create a Kafka Producer and Consumer using the standard confluent-kafka library and connect it to a Hopsworks cluster. You can find the source code for all examples at `Kafka Hopsworks Examples at GitHub`_.
+
+You will need a working Python environment and the following packages:
+
+.. code-block:: shell
+
+   pip install confluent-kafka hops
+
+..
+   https://www.confluent.io/blog/avro-kafka-data/
+
+
+Configuration File
+------------------
+We'll write down all the parameters we prepared in the previous section in a configuration file. This makes it easier to change and also to switch between multiple projects or deployments by switching configuration files.
+
+Go through the parameters and change them accordingly to match your project settings. Then save it as `config.toml <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/config.toml>`_
+
+.. code-block:: toml
+
+   [hops]
+   url = '127.0.0.1'
+
+   # for testing only! set this flag to false or path to server certificate file
+   # needed when testing Hopsworks with a self signed certificate
+   # otherwise leave this true
+   verify = false
+
+   [project]
+   name =  'Kafka_Tutorial'
+   id = '1143'
+   ca_file = 'cert/trustStore.pem'
+   certificate_file = 'cert/keyStore.pem'
+   key_file = 'cert/keyStore.pem'
+   key_password = 'asdf123'
+
+   [kafka]
+   topic = 'temprature'
+   schema = 'sensor'
+   port = '9092'
+
+   [kafka.consumer]
+   group_id = 'TutorialGroup'
+   auto_offset_reset =  'earliest'
+
+   [api]
+   base = '/hopsworks-api/api'
+   key = 'K97n09yskcBuuFyO.scfQegUMhXfHg7v3Tpk8t6HIPUlmIP463BPdbTSdSEKAfo5AB8SIwY8LGgB4924B'
+   key_file = 'cert/apiKeyFile'
+
+
+
+Sensor Data
+-----------
+We'll need some data to test our example. For that we'll generate a time series with trend, seasonality, and noise. The code can emulate multiple sensors. The generated data looks like the plot below.
+
+.. image:: {static}/images/kafka/sensor_data_sample.png
+    :alt: Sensor Data Sample
+    :width: 100%
+    :align: center
+
+
+The code below for `sensor.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/sensor.py>`_ generates the data.
+The code was inspired by `this example <https://github.com/tensorflow/examples/blob/master/courses/udacity_intro_to_tensorflow_for_deep_learning/l08c01_common_patterns.ipynb>`_.
+You can test it yourself by executing the file.
+
+.. code-block:: bash
+
+   $ python sensor.py
+
+.. include:: code/kafka/sensor.py
+   :code: python
+
 
 Avro Producer
 -------------
 
 Source Code
 ===========
-Github: `Kafka Hopsworks Examples <https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka>`_
+All source code is available at `Kafka HopsWorks Examples at GitHub`_
 
-
+.. _Kafka Hopsworks Examples at GitHub: https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka
 
 .. _schema_management:
   https://hopsworks.readthedocs.io/en/stable/user_guide/hopsworks/kafka.html#schema-management

@@ -106,10 +106,11 @@ dl {margin: 0 0 1.5em 0;}
 dt {font-weight: bold;}
 dd {margin-left: 1.5em;}
 
-div.highlight pre{background-color:  rgb(238, 238, 238); padding: 10px; margin: 10px; overflow: auto;}
+/* added pre.python to work with 'include' .py files which uses code not code-block*/
+div.highlight pre,pre.python {background-color:  rgb(238, 238, 238); padding: 10px; margin: 10px; overflow: auto;}
 
 /* highlight for formating terminal output */
-div.terminal {background-color:  #000000; padding: 10px; margin: 10px; overflow: auto;
+pre.terminal.literal-block {background-color:  #000000; padding: 10px; margin: 10px; overflow: auto;
 	      color: #fefbf3;
 	      /* display: block;
 	      font-family: monospace;
