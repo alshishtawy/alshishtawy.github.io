@@ -1,0 +1,1 @@
+/home/ahmad/work/hopsworks-examples/kafka/schema_examples.py

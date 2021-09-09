@@ -297,7 +297,7 @@ Go through the parameters and change them accordingly to match your project sett
    key_password = 'asdf123'
 
    [kafka]
-   topic = 'temprature'
+   topic = 'temperature'
    schema = 'sensor'
    port = '9092'
 
@@ -336,6 +336,22 @@ You can test it yourself by executing the file.
 
 Avro Producer
 -------------
+With all preparation work out of the way, we are now ready to securely send sensor events into our HopsWorks Kafka topic. Below is the code for `avro_producer.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/avro_producer.py>`_.
+
+.. include:: code/kafka/avro_producer.py
+   :code: python
+   :start-line: 19
+
+
+
+Avro Consumer
+-------------
+
+.. include:: code/kafka/avro_consumer.py
+   :code: python
+   :start-line: 19
+
+
 
 Source Code
 ===========
