@@ -28,8 +28,8 @@ body {
     line-height: 1.4;
     margin: 0;
     padding: 0;
-/*    text-align: left; */
-    text-align: justify;
+    text-align: left;
+/*    text-align: justify;*/
 }
 
 /* Headings */
@@ -120,7 +120,7 @@ div.highlight pre,pre.python {border-style: solid;
 			      padding: 10px;
 			      margin: 10px;
 			      overflow: auto;
-			      max-height: 1000px;
+			      max-height: 800px;
 			      overflow-y: auto;}
 
 /* highlight for formating terminal output */
@@ -551,7 +551,7 @@ div.admonition ul, div.admonition ol {
 
 /* -- danger, error -- */
 div.danger,
-0div.error {
+div.error {
   color: #b94a48;
   background-color: #f2dede;
   border-color: #eed3d7;

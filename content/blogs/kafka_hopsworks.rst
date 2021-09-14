@@ -93,7 +93,7 @@ To create a new Kafka topic, open the topic settings in the Kafka tab and select
     :width: 100%
     :align: center
 
-Give your topic a name. This will be used later in the code to identify the topic. Enter the desired number of partitions and replication degree. Select a schema and schema version to use with this topic.
+Give your topic a name. This will be used later in the code to identify the topic. Enter the desired number of partitions and replication degree. Select a schema and schema version to use with this topic. For this tutorial, use the values shown in the image below.
 
 .. note::
    For testing, it is OK to set the number of partitions and replicas to 1. In a production system, you should always set the number of replicas to larger that 1 (typically 3) to avoid data loss on server failures and also select appropriate number of partitions to achieve the desired performance based on the expected number and rate of events.
@@ -338,11 +338,192 @@ You can test it yourself by executing the file.
 
 Avro Producer
 -------------
-With all preparation work out of the way, we are now ready to securely send sensor events into our HopsWorks Kafka topic. Below is the code for `avro_producer.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/avro_producer.py>`_.
+With all preparation work out of the way, we are now ready to securely send sensor events into our HopsWorks Kafka topic. Below is the code for the `avro_producer.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/avro_producer.py>`_.
+
+The code starts by defining an **``Event``** class. This is the class for the objects we want to push into Kafka. You can change this class to match your application. The **``event_to_dict``** is a helper function that returns a dictionary representation of an event object to be used by the Avro serializer. Note that the key names should match the field names defined in the schema and also the value types should match those in the schema.
+
+The **``main``** function loads the configuration file and initializes the schema registry client, Avro serializer, and the producer.
+Then initializes a number of sensors to generate data and finally uses the producer to push the generated data into Kafka.
 
 .. include:: code/kafka/avro_producer.py
    :code: python
    :start-line: 19
+
+
+The program takes a number of optional command line arguments to control the execution. You can specify the location of the configuration file using the -c flag. You can use -e to control the number of events generated per sensor and -d for the delay between events per sensor. The -t flag is used to resume the generation of the time series from the specified time step. This is useful if you want to continue generating more events after the program finishes or stopped.
+
+.. code-block:: bash
+
+   python avro_producer.py --help
+
+.. class:: terminal
+
+::
+
+   $ python avro_producer.py --help
+   usage: avro_producer.py [-h] [-c CONFIG] [-t TIME] [-e EVENTS] [-d DELAY]
+
+   Produces time series data from emulated sensors into a kafka topic hosted at a HopsWorks cluster.
+
+   optional arguments:
+     -h, --help            show this help message and exit
+     -c CONFIG, --config CONFIG
+                           Configuration file in toml format.
+     -t TIME, --time TIME  Start time step for the time series generator. Used to resume generating
+                           the time series after stopping the program.
+     -e EVENTS, --events EVENTS
+                           Number of events to generate per sensor. Negative for infinite number.
+     -d DELAY, --delay DELAY
+                           Delay between events in second. Can be float.
+
+
+
+
+.. warning::
+   There is a bug in the HopsWorks REST API implementation for the schema registry that causes an HTTP error code 415
+   "Unsupported Media Type".
+
+   The reason for this error is a mismatch of the content type sent between the client and the server.
+   The Confluent schema registry client is sending the correct type which is **'application/vnd.schemaregistry.v1+json'**.
+   While the Hopsworks REST API server is expecting content of type **'application/json'**.
+   The bug is reported to the HopsWorks team and is expected to be fixed in upcoming releases after v2.2.
+
+   The easiest workaround is to change the Confluent schema registry client to send content type 'application/json'.
+   This should be OK if you are using Python virtualenv as this change will not affect other applications.
+
+   Edit the file `schema_registry_client.py <https://github.com/confluentinc/confluent-kafka-python/blob/97f08fe107d259eff6f9c281a61d92e204d2935d/src/confluent_kafka/schema_registry/schema_registry_client.py#L165>`_
+   in your local python install directory and search for the line with *'Content-Type'* (line 165 in confluent-kafka v1.7.0)
+   and change it to:
+   ``'Content-Type': "application/json"}``
+
+   The location of the file depends on your Python installation. If you are using virtualenv it will look something like:
+   ``~/.virtualenvs/myvenv/lib/python3.8/site-packages/confluent_kafka/schema_registry/schema_registry_client.py``
+
+
+Now lets generate some events. Below is a sample execution of 5 events with 0.5 seconds delay:
+
+.. code-block:: bash
+
+   python avro_producer.py -e 5 -d 0.5
+
+.. class:: terminal
+
+::
+
+   $ python avro_producer.py -e 5 -d 0.5
+   Producing sensor events to topic temperature.
+   Press Ctrl-c to exit.
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 0
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 1
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 2
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 3
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 4
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 5
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 6
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 7
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 0
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 1
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 2
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 3
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 4
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 5
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 6
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 7
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 8
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 9
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 10
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 11
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 8
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 9
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 10
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 11
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 12
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 13
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 14
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 15
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 12
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 13
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 14
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 15
+   Flushing records...
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 16
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 17
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 18
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 19
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 16
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 17
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 18
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 19
+   To continue execution start from event 5
+
+
+Let's generate some more events. Notice the last line in the execution above. It prints the time step that should be used to continue execution. To do that, we add ``-t 5`` to the command:
+
+.. code-block:: bash
+
+   python avro_producer.py -e 5 -d 0.5 -t 5
+
+.. class:: terminal
+
+::
+
+   $ python avro_producer.py -e 5 -d 0.5 -t 5
+   Producing sensor events to topic temperature.
+   Press Ctrl-c to exit.
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 20
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 21
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 22
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 23
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 24
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 25
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 26
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 27
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 20
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 21
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 22
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 23
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 24
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 25
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 26
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 27
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 28
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 29
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 30
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 31
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 28
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 29
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 30
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 31
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 32
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 33
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 34
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 35
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 32
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 33
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 34
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 35
+   Flushing records...
+   Sensor Event b'sensor0' successfully produced to temperature [0] at offset 36
+   Sensor Event b'sensor1' successfully produced to temperature [0] at offset 37
+   Sensor Event b'sensor2' successfully produced to temperature [0] at offset 38
+   Sensor Event b'sensor3' successfully produced to temperature [0] at offset 39
+   Sensor Event b'sensor4' successfully produced to temperature [1] at offset 36
+   Sensor Event b'sensor5' successfully produced to temperature [1] at offset 37
+   Sensor Event b'sensor6' successfully produced to temperature [1] at offset 38
+   Sensor Event b'sensor7' successfully produced to temperature [1] at offset 39
+   To continue execution start from event 10
+
+
+.. note::
+
+   Remember that when we created the 'temperature' topic we set the number of partitions to two.
+   In the output sample the partition number is shown in the square brackets after the topic name. For example 'temperature [0]'.
+   This means that the event was successfully sent to the temperature topic at partition 0.
+
+   Notice that events from the same sensor (e.g., sensor5) always ends up in the same partition (partition [1] in case of sensor5).
+   This is enforced by Kafka to guarantee the ordered processing of events per event source.
+   This is implemented using the **key** of the produced event which in our case is the sensor id.
+   So pay attention to what you choose as the key depending on the application.
 
 
 
