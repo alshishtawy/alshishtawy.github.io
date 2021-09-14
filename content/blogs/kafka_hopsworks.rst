@@ -123,8 +123,10 @@ You will be asked to enter your login password before downloading.
     :width: 100%
     :align: center
 
+
 After successfully entering your password, two certificate files will be downloaded, trustStore.jks and keyStore.jks. The certificate password will be displayed. It's a long string that is similar to:
-  ``MQJNW833YNBR9C0OZYGBGAB09P2PP4H5EHIALGWIT98I2PNSPTIXFCEI72FT0VLE``
+
+``MQJNW833YNBR9C0OZYGBGAB09P2PP4H5EHIALGWIT98I2PNSPTIXFCEI72FT0VLE``
 
 .. important::
    Store these two files in a safe place as they give remote access to your project and data. Same goes for the password. Copy and save your password in a safe location as we'll need it later.
@@ -146,7 +148,7 @@ You will be asked to enter a new password for each of the generated certificates
       -srcstoretype jks \
       -deststoretype pkcs12
 
-.. container:: terminal
+.. class:: terminal
 
  ::
 
@@ -162,7 +164,7 @@ You will be asked to enter a new password for each of the generated certificates
 
    $ openssl pkcs12 -in keyStore.p12 -out keyStore.pem
 
-.. container:: terminal
+.. class:: terminal
 
  ::
 
