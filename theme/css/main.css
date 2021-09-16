@@ -13,19 +13,23 @@
 @import url("pygment.css");
 @import url("typogrify.css");
 @import url("fonts.css");
+@import url("font-awesome.min.css");
+
+
+
 
 /***** Global *****/
 /* Body */
 body {
     background: #F5F4EF;
     color: #000305;
-    font-size: 150%; /* Base font size: 14px */
+    font-size: 18px; /* Base font size: 14px */
     font-family: 'Trebuchet MS', Trebuchet, 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    line-height: 1.4;
+    line-height: 1.5;
     margin: 0;
     padding: 0;
-/*    text-align: left; */
-    text-align: justify;
+    text-align: left;
+/*    text-align: justify;*/
 }
 
 /* Headings */
@@ -69,7 +73,7 @@ h1 a:hover {
 /* Paragraphs */
 div.line-block,
 p { margin-top: 1em;
-    margin-bottom: 1em;}
+    margin-bottom: 1.4em;}
 
 strong, b {font-weight: bold;}
 em, i {font-style: italic;}
@@ -106,7 +110,26 @@ dl {margin: 0 0 1.5em 0;}
 dt {font-weight: bold;}
 dd {margin-left: 1.5em;}
 
-pre{background-color:  rgb(238, 238, 238); padding: 10px; margin: 10px; overflow: auto;}
+
+/* code highlight */
+/* added pre.python to work with 'include' .py files which uses code not code-block*/
+div.highlight pre,pre.python {border-style: solid;
+			      border-width: 1px;
+			      border-color: #ccc;
+			      background-color: #f5f5f5;
+			      padding: 10px;
+			      margin: 10px;
+			      overflow: auto;
+			      max-height: 800px;
+			      overflow-y: auto;}
+
+/* highlight for formating terminal output */
+pre.terminal.literal-block {background-color:  #000000; padding: 10px; margin: 10px; overflow: auto;
+	      color: #fefbf3;
+	      /* display: block;
+	      font-family: monospace;
+	      white-space: pre; */
+	     }
 
 /* Quotes */
 blockquote {
@@ -117,12 +140,14 @@ cite {}
 
 q {}
 
+/*
 div.note {
    float: right;
    margin: 5px;
    font-size: 85%;
    max-width: 300px;
 }
+*/
 
 /* Tables */
 table {margin: .5em auto 1.5em auto; width: 98%;}
@@ -179,7 +204,7 @@ div.figure p.caption, figure p.caption { /* margin provided by figure */
 	/* Banner */
 	#banner h1 {font-size: 3.571em; line-height: 0;}
 	#banner h1 a:link, #banner h1 a:visited {
-		color: #000305;
+		color: #000306;
 		display: block;
 		font-weight: bold;
 		margin: 0 0 .6em .2em;
@@ -470,8 +495,14 @@ li:last-child .hentry, #content > .hentry {border: 0; margin: 0;}
 
 /* Other: Highlight */
 
-.section>h2 {padding: 12px; background: #000000; color:#FFFFFF}
+.section>h2 {padding: 12px; background: #424949; color:#F2F4F4}
+.section>h3 {padding: 12px; background: #99A3A4; color:#F2F4F4}
+
 /*
+.section>h2 {padding: 12px; background: #000000; color:#FFFFFF}
+.section>h3 {padding: 12px; background: #F5F4EF}
+
+
 .section>p>strong {background: rgb(238, 238, 238); color:#8B0000}
 .section>ul>li>strong {background: rgb(238, 238, 238); color:#8B0000}
 */
@@ -480,4 +511,109 @@ li:last-child .hentry, #content > .hentry {border: 0; margin: 0;}
     background: rgb(238, 238, 238);
     /*color:#8B0000;*/
     font-weight: bold;
+}
+
+
+
+
+/* Admonition styles */
+div.admonition {
+  padding: 8px 35px 8px 0px;
+  margin-bottom: 20px;
+  color: #c09853;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  background-color: #fcf8e3;
+  border: 1px solid #fbeed5;
+  -webkit-border-radius: 4px;
+     -moz-border-radius: 4px;
+          border-radius: 4px;
+}
+
+div.admonition p {
+  margin: 0.5em 1em 0.5em 1em;
+  padding: 0;
+}
+
+div.admonition pre {
+  margin: 0.4em 1em 0.4em 1em;
+}
+
+div.admonition p.admonition-title {
+  margin: 0;
+  padding: 0.1em 0 0.1em 0.5em;
+  font-weight: bold;
+}
+
+div.admonition ul, div.admonition ol {
+  margin: 0.1em 0.5em 0.5em 3em;
+  padding: 0;
+}
+
+/* -- danger, error -- */
+div.danger,
+div.error {
+  color: #b94a48;
+  background-color: #f2dede;
+  border-color: #eed3d7;
+}
+
+
+/* -- warning, caution, attention -- */
+div.warning,
+div.caution,
+div.attention {
+
+}
+
+/* -- note, important -- */
+div.note,
+div.important {
+  color: #468847;
+  background-color: #dff0d8;
+  border-color: #d6e9c6;
+}
+
+/* -- hint, tip -- */
+div.hint,
+div.tip {
+  color: #3a87ad;
+  background-color: #d9edf7;
+  border-color: #bce8f1;
+}
+
+div.danger p.admonition-title:before,
+div.error p.admonition-title:before,
+div.warning p.admonition-title:before,
+div.caution p.admonition-title:before,
+div.attention p.admonition-title:before,
+div.important p.admonition-title:before,
+div.note p.admonition-title:before,
+div.hint p.admonition-title:before,
+div.tip p.admonition-title:before
+{
+  display: inline-block;
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+div.danger p.admonition-title:before,
+div.error p.admonition-title:before {
+  content: "\f06a\00a0";
+}
+div.warning p.admonition-title:before,
+div.caution p.admonition-title:before,
+div.attention p.admonition-title:before {
+  content: "\f071\00a0";
+}
+div.important p.admonition-title:before,
+div.note p.admonition-title:before {
+  content: "\f05a\00a0";
+}
+div.hint p.admonition-title:before,
+div.tip p.admonition-title:before {
+  content: "\f0eb\00a0";
 }

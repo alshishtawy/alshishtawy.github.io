@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Ahmad Al-Shishtawy - Kafka</title>
+        <link rel="stylesheet" href="https://alshishtawy.github.io/theme/css/main.css" />
+        <link href="https://alshishtawy.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Ahmad Al-Shishtawy Atom Feed" />
+</head>
+
+<body id="index" class="home">
+<a href="https://github.com/alshishtawy/alshishtawy.github.io/tree/source">
+<img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" />
+</a>
+        <header id="banner" class="body">
+                <h1><a href="https://alshishtawy.github.io/">Ahmad Al-Shishtawy <strong>Senior Researcher, PhD</strong></a></h1>
+                <nav><ul>
+                    <li><a href="https://alshishtawy.github.io/">Bio</a></li>
+                    <li><a href="https://alshishtawy.github.io/pages/about-me.html">About&nbsp;Me</a></li>
+                    <li><a href="https://alshishtawy.github.io/pages/publications-list.html">Publications</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+            <aside id="featured" class="body">
+                <article>
+                    <h1 class="entry-title"><a href="https://alshishtawy.github.io/kafka-hopsworks.html">The Ultimate Guide to Using an External Python Kafka Client to Interact with a Hopsworks&nbsp;Cluster</a></h1>
+<footer class="post-info">
+        <abbr class="published" title="2021-09-16T00:00:00+02:00">
+                Published: Thu 16 September 2021
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://alshishtawy.github.io/author/ahmad-al-shishtawy.html">Ahmad Al-Shishtawy</a>
+        </address>
+<p>In <a href="https://alshishtawy.github.io/category/guides.html">Guides</a>.</p>
+<p>tags: <a href="https://alshishtawy.github.io/tag/kafka.html">Kafka</a> <a href="https://alshishtawy.github.io/tag/spark.html">Spark</a> <a href="https://alshishtawy.github.io/tag/hopsworks.html">Hopsworks</a> <a href="https://alshishtawy.github.io/tag/python.html">Python</a> <a href="https://alshishtawy.github.io/tag/stream-processing.html">Stream Processing</a> </p>
+</footer><!-- /.post-info --><p>In this guide, we illustrate how to configure and use the python Confluent Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data&nbsp;serialization.</p>
+<p>This tutorial was tested using Hopsworks version&nbsp;2.2.</p>
+<div class="section" id="prepare-the-environment">
+<h2>Prepare the&nbsp;Environment</h2>
+<p>We&#8217;ll start by preparing the schema, creating a Kafka topic, and downloading security credentials that we&#8217;ll need in this&nbsp;tutorial.</p>
+<div class="section" id="avro-schema">
+<h3>Avro&nbsp;Schema</h3>
+<p>Kafka treats data as blobs of bytes. It is your responsibility to pick a data format per topic and use it consistently across applications interacting with the topic. You are free to choose any format you prefer such as <span class="caps">JSON</span> or Protobuf. However, <a class="reference external" href="http://avro.apache.org/docs/current/">Avro</a> became the industry standard for data format to use with Kafka. Avro is an open source data serialization system that is used to exchange data between systems across programming&nbsp;languages.</p>
+<p>Avro relies on schemas that are used when writing/reading data. To simplify the management of schemas, Confluent implemented a
+<a class="reference external" href="https://docs.confluent.io/platform/current/schema-registry/index.html">Schema Registry</a> as a layer on top of Kafka. Hopsworks implements its own schema registry that is compatible with Confluent Schema Registry v5.3.1. Kafka clients can use the schema registry to validate and make sure that the correct data is written to or read from a kafka&nbsp;topic.</p>
+<p>In this tutorial, we&#8217;ll use temperature sensors as an example. Each sensor will have a unique <strong><span class="caps">ID</span></strong>, produce a temperature as its <strong>value</strong> at a specific <strong>timestamp</strong>. We&#8217;ll create a generic sensor schema that can be used with sensors with similar pattern.
+The code blow list the schema used in this tutorial.
+For more details about declaring Avro schemas and supported data types, check the <a class="reference external" href="https://avro.apache.org/docs/current/spec.html#schemas">Avro schemas</a>&nbsp;documentation.</p>
+<!-- hops `schema_management`_ -->
+<div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;record&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;sensor&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;logicalType&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp-millis&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;double&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+<p>To register the above schema in Hopsworks, open the schemas settings in the Kafka tab and select <strong>New Avro&nbsp;Schema</strong></p>
+<img alt="Avro schema settings page" class="align-center" src="https://alshishtawy.github.io/images/kafka/avro_schema.png" style="width: 100%;" />
+<p>Then enter a <strong>Schema Name</strong> field for your schema and paste the schema itself in the <strong>content</strong> field.
+To check that the syntax of the schema is correct, press the <strong>Validate</strong> button. If everything is <span class="caps">OK</span> proceed by pressing the <strong>Create</strong>&nbsp;button.</p>
+<div class="admonition caution">
+<p class="first admonition-title">Caution!</p>
+<p class="last">For the schema to work correctly with standard external clients, such as the Confluent Avro Producer/Consumer, the name given in the &#8220;Schema Name&#8221; field and in the schema declaration <strong>must be the same name</strong>.
+Furthermore, if you use a name space in the schema declaration, e.g., <tt class="docutils literal">&quot;namespace&quot;: &quot;se.ri.kafka.tutorial&quot;, &quot;name&quot;: &quot;sensor&quot;</tt>, then the &#8220;Schema Name&#8221; field should contain the full name, i.e., <tt class="docutils literal">se.ri.kafka.tutorial.sensor</tt>.</p>
+</div>
+<img alt="Registring a new Avro schema" class="align-center" src="https://alshishtawy.github.io/images/kafka/avro_schema_new.png" style="width: 100%;" />
+</div>
+<div class="section" id="kafka-topic">
+<h3>Kafka&nbsp;Topic</h3>
+<p>Topics are a way to organize related events. A topic is like a buffer between event producers and event consumers. Events are durably stored in a topic and are not deleted after consumption. Events can be read as many times as needed and you define for how long Kafka should retain your&nbsp;events.</p>
+<p>For scalability, a topic is divided into a number of partitions that are distributed across servers (called Kafka Brokers). Events are distributed among partitions either uniformly or by event key. Using an event key is recommended to guarantee that events from the same entity, e.g., user or sensor, end up in the same partition and thus processed in the correct order of&nbsp;arrival.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">The number of partitions determine the maximum parallelism for processing (consuming) events by a single application. You can have as many event producers per topic as you want. Also there can be as many applications processing (consuming) events from a topic as needed. But within a single application, also known as a <strong>consumer group</strong>, the maximum parallelism (number of consumers) is defined by the number of partitions in the topic. This restriction is to guarantee the ordered processing of events within a&nbsp;topic.</p>
+</div>
+<p>To create a new Kafka topic, open the topic settings in the Kafka tab and select <em>New Topic</em>.</p>
+<img alt="Kafka topics settings page" class="align-center" src="https://alshishtawy.github.io/images/kafka/kafka_topic.png" style="width: 100%;" />
+<p>Give your topic a name. This will be used later in the code to identify the topic. Enter the desired number of partitions and replication degree. Select a schema and schema version to use with this topic. For this tutorial, use the values shown in the image&nbsp;below.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For testing, it is <span class="caps">OK</span> to set the number of partitions and replicas to 1. In a production system, you should always set the number of replicas to larger that 1 (typically 3) to avoid data loss on server failures and also select appropriate number of partitions to achieve the desired performance based on the expected number and rate of&nbsp;events.</p>
+</div>
+<img alt="Creating a new Kafka topic" class="align-center" src="https://alshishtawy.github.io/images/kafka/kafka_topic_new.png" style="width: 100%;" />
+</div>
+<div class="section" id="security-certificates">
+<h3>Security&nbsp;Certificates</h3>
+<p>Hopsworks provide a secure Kafka-as-a-Service. Connecting your Python Producers and Consumers from an external server to the one provided by Hopsworks requires exporting the project certificates. These are used by the clients to securely connect and authenticate against the Hopsworks Kafka cluster. The certificates are downloaded as a keystore and trustore. These are designed used by Java/Scala programs and needs to be converted to <em>.pem</em> format to be used by Python and other non Java&nbsp;programs.</p>
+<p>To export your projects&#8217; certificates, go to <em>Project Settings</em> in the <em>Settings</em> tab and click <em>Export Certificates</em>.</p>
+<img alt="Project settings page" class="align-center" src="https://alshishtawy.github.io/images/kafka/project_settings.png" style="width: 100%;" />
+<p>You will be asked to enter your login password before&nbsp;downloading.</p>
+<img alt="Exporting project certificates (1/2)" class="align-center" src="https://alshishtawy.github.io/images/kafka/project_settings_export_1.png" style="width: 100%;" />
+<p>After successfully entering your password, two certificate files will be downloaded, trustStore.jks and keyStore.jks. The certificate password will be displayed. It&#8217;s a long string that is similar&nbsp;to:</p>
+<p><tt class="docutils literal"><span class="caps">MQJNW833YNBR9C0OZYGBGAB09P2PP4H5EHIALGWIT98I2PNSPTIXFCEI72FT0VLE</span></tt></p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">Store these two files in a safe place as they give remote access to your project and data. Same goes for the password. Copy and save your password in a safe location as we&#8217;ll need it&nbsp;later.</p>
+</div>
+<img alt="Exporting project certificates (2/2)" class="align-center" src="https://alshishtawy.github.io/images/kafka/project_settings_export_2.png" style="width: 100%;" />
+<p>Next, we&#8217;ll convert the <span class="caps">JKS</span> keyStore into an intermediate <span class="caps">PKCS</span>#12 keyStore, then into <span class="caps">PEM</span> file.
+You will be asked to enter a new password for each of the generated certificates and also the original certificate password you got from the previous&nbsp;step.</p>
+<div class="highlight"><pre><span></span>$ keytool -importkeystore -srckeystore keyStore.jks <span class="se">\</span>
+   -destkeystore keyStore.p12 <span class="se">\</span>
+   -srcstoretype jks <span class="se">\</span>
+   -deststoretype pkcs12
+</pre></div>
+<pre class="terminal literal-block">
+$ keytool -importkeystore -srckeystore keyStore.jks -destkeystore keyStore.p12 -srcstoretype jks -deststoretype pkcs12
+Importing keystore keyStore.jks to keyStore.p12...
+Enter destination keystore password:
+Re-enter new password:
+Enter source keystore password:
+Entry for alias kafka_tutorial__meb10000 successfully imported.
+Import command completed:  1 entries successfully imported, 0 entries failed or cancelled
+</pre>
+<div class="highlight"><pre><span></span>$ openssl pkcs12 -in keyStore.p12 -out keyStore.pem
+</pre></div>
+<pre class="terminal literal-block">
+$ openssl pkcs12 -in keyStore.p12 -out keyStore.pem
+Enter Import Password:
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+$ ls
+keyStore.jks  keyStore.p12  keyStore.pem  trustStore.jks
+</pre>
+<p>We repeat the same steps for the&nbsp;trustStore.</p>
+<div class="highlight"><pre><span></span>$ keytool -importkeystore -srckeystore trustStore.jks <span class="se">\</span>
+   -destkeystore trustStore.p12 <span class="se">\</span>
+   -srcstoretype jks <span class="se">\</span>
+   -deststoretype pkcs12
+</pre></div>
+<pre class="terminal literal-block">
+$ keytool -importkeystore -srckeystore trustStore.jks -destkeystore trustStore.p12 -srcstoretype jks -deststoretype pkcs12
+Importing keystore trustStore.jks to trustStore.p12...
+Enter destination keystore password:
+Re-enter new password:
+Enter source keystore password:
+Entry for alias hops_root_ca successfully imported.
+Import command completed:  1 entries successfully imported, 0 entries failed or cancelled
+</pre>
+<div class="highlight"><pre><span></span>$ openssl pkcs12 -in trustStore.p12 -out trustStore.pem
+</pre></div>
+<pre class="terminal literal-block">
+$ openssl pkcs12 -in trustStore.p12 -out trustStore.pem
+Enter Import Password:
+$ ls
+keyStore.jks  keyStore.p12  keyStore.pem  trustStore.jks  trustStore.p12  trustStore.pem
+</pre>
+<p>Now you should have <tt class="docutils literal">keyStore.pem</tt> and <tt class="docutils literal">trustStore.pem</tt> that we&#8217;ll use in the rest of this tutorial. You can safely delete the intermediate <tt class="docutils literal">.p12</tt> files.</p>
+</div>
+<div class="section" id="api-key">
+<h3><span class="caps">API</span>&nbsp;Key</h3>
+<p>Hopsworks provides a rich <a class="reference external" href="https://app.swaggerhub.com/apis-docs/logicalclocks/hopsworks-api"><span class="caps">REST</span> <span class="caps">API</span></a> to interact with most of the available services. One of these services is the <em>Schema Registry</em> that we&#8217;ll be using in this tutorial. To access the <em><span class="caps">REST</span> <span class="caps">API</span></em> we&#8217;ll need an <em><span class="caps">API</span> Key</em>.</p>
+<p>To create a new <span class="caps">API</span> Key associated with your account, open your user account&nbsp;settings.</p>
+<img alt="Account Settings" class="align-center" src="https://alshishtawy.github.io/images/kafka/account_settings.png" style="width: 100%;" />
+<p>Select the <span class="caps">API</span> Keys tab. Give your key a name and select the services that the app using this key can access. Then click on <em>Create <span class="caps">API</span> Key</em>.</p>
+<img alt="Account Settings - API Keys tab" class="align-center" src="https://alshishtawy.github.io/images/kafka/account_settings_api_key_1.png" style="width: 100%;" />
+<p>Copy and store your new key in a safe plase as this is the only time it will be displayed. If you loose your <span class="caps">API</span> Key you&#8217;ll have to delete it and create a new&nbsp;one.</p>
+<p>Your <span class="caps">API</span> Key will look somethin like&nbsp;this:</p>
+<blockquote>
+<tt class="docutils literal">K97n09yskcBuuFyO.scfQegUMhXfHg7v3Tpk8t6HIPUlmIP463BPdbTSdSEKAfo5AB8SIwY8LGgB4924B</tt></blockquote>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">Store your <span class="caps">API</span> Key in a text file (e.g., apiKeyFile) next to your certificates. We&#8217;ll use this file later to configure&nbsp;clients.</p>
+</div>
+<img alt="Creating an API Key" class="align-center" src="https://alshishtawy.github.io/images/kafka/account_settings_api_key_2.png" style="width: 100%;" />
+</div>
+<div class="section" id="project-name-and-id">
+<h3>Project Name and <span class="caps">ID</span></h3>
+<p>The final piece if information we need is the project name and <span class="caps">ID</span>. You will find this in your project settings&nbsp;tab.</p>
+<img alt="Project Name and ID" class="align-center" src="https://alshishtawy.github.io/images/kafka/project_settings_name_id.png" style="width: 100%;" />
+</div>
+</div>
+<div class="section" id="avro-client">
+<h2>Avro&nbsp;Client</h2>
+<p>Now we are ready for some coding. We&#8217;ll create a Kafka Producer and Consumer using the standard confluent-kafka library and connect it to a Hopsworks cluster. You can find the source code for all examples at <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka">Kafka Hopsworks Examples at GitHub</a>.</p>
+<p>You will need a working Python environment and the following&nbsp;packages:</p>
+<div class="highlight"><pre><span></span>pip install confluent_kafka requests fastavro toml
+</pre></div>
+<p>For plotting you might need the following packages depending on your&nbsp;environment:</p>
+<div class="highlight"><pre><span></span>pip install matplotlib
+pip install pyqt5
+sudo apt install qt5-default
+</pre></div>
+<!-- https://www.confluent.io/blog/avro-kafka-data/ -->
+<div class="section" id="configuration-file">
+<h3>Configuration&nbsp;File</h3>
+<p>We&#8217;ll write down all the parameters we prepared in the previous section in a configuration file. This makes it easier to change and also to switch between multiple projects or deployments by switching configuration&nbsp;files.</p>
+<p>Go through the parameters and change them accordingly to match your project settings. Then save it as <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/config.toml">config.toml</a></p>
+<div class="highlight"><pre><span></span><span class="k">[hops]</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1&#39;</span>
+
+<span class="c1"># for testing only! set this flag to false or path to server certificate file</span>
+<span class="c1"># needed when testing Hopsworks with a self signed certificate</span>
+<span class="c1"># otherwise leave this true</span>
+<span class="n">verify</span> <span class="o">=</span> <span class="kc">false</span>
+
+<span class="k">[project]</span>
+<span class="n">name</span> <span class="o">=</span>  <span class="s">&#39;Kafka_Tutorial&#39;</span>
+<span class="n">id</span> <span class="o">=</span> <span class="s">&#39;1143&#39;</span>
+<span class="n">ca_file</span> <span class="o">=</span> <span class="s">&#39;cert/trustStore.pem&#39;</span>
+<span class="n">certificate_file</span> <span class="o">=</span> <span class="s">&#39;cert/keyStore.pem&#39;</span>
+<span class="n">key_file</span> <span class="o">=</span> <span class="s">&#39;cert/keyStore.pem&#39;</span>
+<span class="n">key_password</span> <span class="o">=</span> <span class="s">&#39;asdf123&#39;</span>
+
+<span class="k">[kafka]</span>
+<span class="n">topic</span> <span class="o">=</span> <span class="s">&#39;temperature&#39;</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="s">&#39;sensor&#39;</span>
+<span class="n">port</span> <span class="o">=</span> <span class="s">&#39;9092&#39;</span>
+
+<span class="k">[kafka.consumer]</span>
+<span class="n">group_id</span> <span class="o">=</span> <span class="s">&#39;TutorialGroup&#39;</span>
+<span class="n">auto_offset_reset</span> <span class="o">=</span>  <span class="s">&#39;earliest&#39;</span>
+
+<span class="k">[api]</span>
+<span class="n">base</span> <span class="o">=</span> <span class="s">&#39;/hopsworks-api/api&#39;</span>
+<span class="n">key</span> <span class="o">=</span> <span class="s">&#39;K97n09yskcBuuFyO.scfQegUMhXfHg7v3Tpk8t6HIPUlmIP463BPdbTSdSEKAfo5AB8SIwY8LGgB4924B&#39;</span>
+<span class="n">key_file</span> <span class="o">=</span> <span class="s">&#39;cert/apiKeyFile&#39;</span>
+</pre></div>
+</div>
+<div class="section" id="sensor-data">
+<h3>Sensor&nbsp;Data</h3>
+<p>We&#8217;ll need some data to test our example. For that we&#8217;ll generate a time series with trend, seasonality, and noise. The code can emulate multiple sensors. The generated data looks like the plot&nbsp;below.</p>
+<img alt="Sensor Data Sample" class="align-center" src="https://alshishtawy.github.io/images/kafka/sensor_data_sample.png" style="width: 100%;" />
+<p>The code below for <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/sensor.py">sensor.py</a> generates the data.
+The code was inspired by <a class="reference external" href="https://github.com/tensorflow/examples/blob/master/courses/udacity_intro_to_tensorflow_for_deep_learning/l08c01_common_patterns.ipynb">this example</a>.
+You can test it yourself by executing the&nbsp;file.</p>
+<div class="highlight"><pre><span></span>$ python sensor.py
+</pre></div>
+<pre class="code python literal-block">
+<span class="c1"># Generates a time series with trend, seasonality, and noise.</span>
+<span class="c1"># Inspired by code from https://github.com/tensorflow/examples/blob/master/courses/udacity_intro_to_tensorflow_for_deep_learning/l08c01_common_patterns.ipynb</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">import</span> <span class="nn">math</span><span class="o">,</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+
+<span class="k">def</span> <span class="nf">trend</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">time</span>
+
+<span class="k">def</span> <span class="nf">seasonal_pattern</span><span class="p">(</span><span class="n">season_time</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Just an arbitrary pattern, you can change it if you wish&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">season_time</span> <span class="o">&lt;</span> <span class="mf">0.4</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">season_time</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">season_time</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">seasonality</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repeats the same pattern at each period&quot;&quot;&quot;</span>
+    <span class="n">season_time</span> <span class="o">=</span> <span class="p">((</span><span class="n">time</span> <span class="o">+</span> <span class="n">phase</span><span class="p">)</span> <span class="o">%</span> <span class="n">period</span><span class="p">)</span> <span class="o">/</span> <span class="n">period</span>
+    <span class="k">return</span> <span class="n">amplitude</span> <span class="o">*</span> <span class="n">seasonal_pattern</span><span class="p">(</span><span class="n">season_time</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">white_noise</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">normalvariate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise_level</span>
+
+<span class="c1"># Combines the above functions to emulate a sensor.</span>
+<span class="c1"># Uses Python generator function</span>
+<span class="k">def</span> <span class="nf">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">period</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">start</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">time</span><span class="o">&lt;</span><span class="n">end</span> <span class="ow">or</span> <span class="n">end</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">baseline</span> <span class="o">+</span> <span class="n">trend</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">slope</span><span class="p">)</span> \
+            <span class="o">+</span> <span class="n">seasonality</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span> \
+            <span class="o">+</span> <span class="n">white_noise</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">noise_level</span><span class="p">)</span>
+        <span class="n">time</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+
+    <span class="c1"># initialize a number of sensors</span>
+    <span class="n">sensors</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>  <span class="n">period</span> <span class="o">=</span>  <span class="mi">80</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">slope</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">period</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="c1"># a list of buffers to emulate receving data</span>
+    <span class="n">data_buffer</span> <span class="o">=</span>  <span class="p">[</span><span class="n">deque</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sensors</span><span class="p">))]</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sensors</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">plot</span><span class="p">([])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ax</span><span class="p">]</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">events</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">sensors</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">e</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">data_buffer</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)),</span> <span class="n">b</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
+
+
+
+    <span class="c1"># pause execution so you can examin the figure</span>
+    <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Press Enter to continue...&quot;</span><span class="p">)</span>
+</pre>
+</div>
+<div class="section" id="avro-producer">
+<h3>Avro&nbsp;Producer</h3>
+<p>With all preparation work out of the way, we are now ready to securely send sensor events into our HopsWorks Kafka topic. Below is the code for the <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/avro_producer.py">avro_producer.py</a>.</p>
+<p>The code starts by defining an <strong>&#8220;Event&#8220;</strong> class. This is the class for the objects we want to push into Kafka. You can change this class to match your application. The <strong>&#8220;event_to_dict&#8220;</strong> is a helper function that returns a dictionary representation of an event object to be used by the Avro serializer. Note that the key names should match the field names defined in the schema and also the value types should match those in the&nbsp;schema.</p>
+<p>The <strong>&#8220;main()&#8220;</strong> function loads the configuration file and initializes the schema registry client, Avro serializer, and the producer.
+Then initializes a number of sensors to generate data and finally uses the producer to push the generated data into&nbsp;Kafka.</p>
+<pre class="code python literal-block">
+<span class="c1"># This is a simple example of the SerializingProducer using Avro.</span>
+<span class="c1">#</span>
+
+<span class="kn">from</span> <span class="nn">confluent_kafka</span> <span class="kn">import</span> <span class="n">SerializingProducer</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.serialization</span> <span class="kn">import</span> <span class="n">StringSerializer</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">SchemaRegistryClient</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry.avro</span> <span class="kn">import</span> <span class="n">AvroSerializer</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">record_subject_name_strategy</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">toml</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">sensor</span> <span class="kn">import</span> <span class="n">sensor</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+
+
+<span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;
+    An object representing a sensor event
+
+    Args:
+        id (str): Sensor's id
+
+        timestamp (datetime): timestamp in milliseconds
+
+        value (double): Sensor's reading value
+
+    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">event_to_dict</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;
+    Returns a dict representation of a sensor Event instance for serialization.
+
+    Args:
+        event (Event): Event instance.
+
+        ctx (SerializationContext): Metadata pertaining to the serialization
+            operation.
+
+    Returns:
+        dict: Dict populated with sensor event attributes to be serialized.
+
+    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="p">),</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">delivery_report</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;
+    Reports the failure or success of a message delivery.
+
+    Args:
+        err (KafkaError): The error that occurred on None on success.
+
+        msg (Message): The message that was produced or failed.
+
+    Note:
+        In the delivery report callback the Message.key() and Message.value()
+        will be the binary format as encoded by any configured Serializers and
+        not the same object that was passed to produce().
+        If you wish to pass the original object(s) for key and value to delivery
+        report callback we recommend a bound callback or lambda where you pass
+        the objects along.
+
+    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Delivery failed for sensor Event </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">key</span><span class="p">(),</span> <span class="n">err</span><span class="p">))</span>
+        <span class="k">return</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Sensor Event </span><span class="si">{}</span><span class="s1"> successfully produced to </span><span class="si">{}</span><span class="s1"> [</span><span class="si">{}</span><span class="s1">] at offset </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">msg</span><span class="o">.</span><span class="n">key</span><span class="p">(),</span> <span class="n">msg</span><span class="o">.</span><span class="n">topic</span><span class="p">(),</span> <span class="n">msg</span><span class="o">.</span><span class="n">partition</span><span class="p">(),</span> <span class="n">msg</span><span class="o">.</span><span class="n">offset</span><span class="p">()))</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+
+    <span class="c1"># Parse arguments</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">'Produces time series data from emulated '</span>
+                                     <span class="s1">'sensors into a kafka topic hosted at a HopsWorks cluster.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'config.toml'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Configuration file in toml format.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-t&quot;</span><span class="p">,</span> <span class="s2">&quot;--time&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Start time step for the time series generator. Used to resume '</span>
+                        <span class="s1">'generating the time series after stopping the program.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-e&quot;</span><span class="p">,</span> <span class="s2">&quot;--events&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Number of events to generate per sensor. Negative for infinite number.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s2">&quot;--delay&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Delay between events in second. Can be float.'</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># Load HopsWorks Kafka configuration</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Kafka schema that this program supports/expects</span>
+    <span class="c1"># The schema will be checked against the schema of the Kafka topic</span>
+    <span class="n">schema_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;
+    {
+      &quot;type&quot;: &quot;record&quot;,
+      &quot;name&quot;: &quot;sensor&quot;,
+      &quot;fields&quot;: [
+        {
+          &quot;name&quot;: &quot;timestamp&quot;,
+          &quot;type&quot;: &quot;long&quot;,
+          &quot;logicalType&quot;: &quot;timestamp-millis&quot;
+        },
+        {
+          &quot;name&quot;: &quot;id&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;name&quot;: &quot;value&quot;,
+          &quot;type&quot;: &quot;double&quot;
+        }
+      ]
+    }
+    &quot;&quot;&quot;</span>
+
+    <span class="c1"># url for the schema registry in HopsWorks REST API services</span>
+    <span class="n">registry_url</span> <span class="o">=</span> <span class="s1">'https://'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span>\
+        <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'base'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/project/'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'id'</span><span class="p">]</span><span class="o">+</span><span class="s1">'/kafka'</span>
+
+    <span class="c1"># Initialise the Confluent schema registry client</span>
+    <span class="n">schema_registry_conf</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'url'</span><span class="p">:</span> <span class="n">registry_url</span><span class="p">,</span> <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'verify'</span><span class="p">]}</span>
+    <span class="n">schema_registry_client</span> <span class="o">=</span> <span class="n">SchemaRegistryClient</span><span class="p">(</span><span class="n">schema_registry_conf</span><span class="p">)</span>
+
+    <span class="c1"># Add the API key required by HopsWorks but not configurable through the confluent schema registry client</span>
+    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
+    <span class="n">schema_registry_client</span><span class="o">.</span><span class="n">_rest_client</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the avro serializer for the value using the schema</span>
+    <span class="n">avro_serializer</span> <span class="o">=</span> <span class="n">AvroSerializer</span><span class="p">(</span><span class="n">schema_registry_client</span><span class="p">,</span>
+                                     <span class="n">schema_str</span><span class="p">,</span>
+                                     <span class="n">event_to_dict</span><span class="p">,</span>
+                                     <span class="p">{</span><span class="s1">'auto.register.schemas'</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">'subject.name.strategy'</span><span class="p">:</span> <span class="n">record_subject_name_strategy</span><span class="p">})</span>
+
+    <span class="c1"># Initialize a simple String serializer for the key</span>
+    <span class="n">string_serializer</span> <span class="o">=</span> <span class="n">StringSerializer</span><span class="p">(</span><span class="s1">'utf_8'</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the producer</span>
+    <span class="n">producer_conf</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'bootstrap.servers'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span><span class="o">+</span><span class="s1">':'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'port'</span><span class="p">],</span>
+                     <span class="s1">'security.protocol'</span><span class="p">:</span> <span class="s1">'SSL'</span><span class="p">,</span>
+                     <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'ca_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.certificate.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'certificate_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.password'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_password'</span><span class="p">],</span>
+                     <span class="s1">'key.serializer'</span><span class="p">:</span> <span class="n">string_serializer</span><span class="p">,</span>
+                     <span class="s1">'value.serializer'</span><span class="p">:</span> <span class="n">avro_serializer</span><span class="p">}</span>
+    <span class="n">producer</span> <span class="o">=</span> <span class="n">SerializingProducer</span><span class="p">(</span><span class="n">producer_conf</span><span class="p">)</span>
+
+    <span class="c1"># Initialize a number of sensors</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">time</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">args</span><span class="o">.</span><span class="n">events</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">events</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">sensors</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>   <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="n">slope</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>   <span class="n">period</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>  <span class="n">amplitude</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="n">slope</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>   <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>  <span class="n">slope</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>  <span class="n">slope</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>     <span class="n">period</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>   <span class="n">slope</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>   <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>   <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="c1"># Start producing events</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Producing sensor events to topic </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Press Ctrl-c to exit.'</span><span class="p">)</span>
+    <span class="n">time_step</span> <span class="o">=</span> <span class="n">start</span>     <span class="c1"># a counter for the number of time steps generated</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">sensors</span><span class="p">):</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+            <span class="n">time_step</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+                <span class="c1"># Serve on_delivery callbacks from previous calls to produce()</span>
+                <span class="n">producer</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">event</span> <span class="o">=</span> <span class="n">Event</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s1">'sensor'</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                                  <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">,</span>
+                                  <span class="n">value</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+                    <span class="n">producer</span><span class="o">.</span><span class="n">produce</span><span class="p">(</span><span class="n">topic</span><span class="o">=</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="p">,</span>
+                                     <span class="n">on_delivery</span><span class="o">=</span><span class="n">delivery_report</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Invalid input, discarding record...&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">delay</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Stopping...'</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Flushing records...&quot;</span><span class="p">)</span>
+    <span class="n">producer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'To continue execution start from event </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time_step</span><span class="p">))</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre>
+<p>The program takes a number of optional command line arguments to control the execution. You can specify the location of the configuration file using the -c flag. You can use -e to control the number of events generated per sensor and -d for the delay between events per sensor. The -t flag is used to resume the generation of the time series from the specified time step. This is useful if you want to continue generating more events after the program finishes or&nbsp;stopped.</p>
+<div class="highlight"><pre><span></span>python avro_producer.py --help
+</pre></div>
+<pre class="terminal literal-block">
+$ python avro_producer.py --help
+usage: avro_producer.py [-h] [-c CONFIG] [-t TIME] [-e EVENTS] [-d DELAY]
+
+Produces time series data from emulated sensors into a kafka topic hosted at a HopsWorks cluster.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Configuration file in toml format.
+  -t TIME, --time TIME  Start time step for the time series generator. Used to resume generating
+                        the time series after stopping the program.
+  -e EVENTS, --events EVENTS
+                        Number of events to generate per sensor. Negative for infinite number.
+  -d DELAY, --delay DELAY
+                        Delay between events in second. Can be float.
+</pre>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>There is a bug in the HopsWorks <span class="caps">REST</span> <span class="caps">API</span> implementation for the schema registry that causes an <span class="caps">HTTP</span> error code 415
+&#8220;Unsupported Media&nbsp;Type&#8221;.</p>
+<p>The reason for this error is a mismatch of the content type sent between the client and the server.
+The Confluent schema registry client is sending the correct type which is <strong>&#8216;application/vnd.schemaregistry.v1+json&#8217;</strong>.
+While the Hopsworks <span class="caps">REST</span> <span class="caps">API</span> server is expecting content of type <strong>&#8216;application/json&#8217;</strong>.
+The bug is reported to the HopsWorks team and is expected to be fixed in upcoming releases after&nbsp;v2.2.</p>
+<p>The easiest workaround is to change the Confluent schema registry client to send content type &#8216;application/json&#8217;.
+This should be <span class="caps">OK</span> if you are using Python virtualenv as this change will not affect other&nbsp;applications.</p>
+<p>Edit the file <a class="reference external" href="https://github.com/confluentinc/confluent-kafka-python/blob/97f08fe107d259eff6f9c281a61d92e204d2935d/src/confluent_kafka/schema_registry/schema_registry_client.py#L165">schema_registry_client.py</a>
+in your local python install directory and search for the line with <em>&#8216;Content-Type&#8217;</em> (line 165 in confluent-kafka v1.7.0)
+and change it to:
+<tt class="docutils literal"><span class="pre">'Content-Type':</span> &quot;application/json&quot;}</tt></p>
+<p class="last">The location of the file depends on your Python installation. If you are using virtualenv it will look something like:
+<tt class="docutils literal"><span class="pre">~/.virtualenvs/myvenv/lib/python3.8/site-packages/confluent_kafka/schema_registry/schema_registry_client.py</span></tt></p>
+</div>
+<p>Now lets generate some events. Below is a sample execution of 5 events with 0.5 seconds&nbsp;delay:</p>
+<div class="highlight"><pre><span></span>python avro_producer.py -e <span class="m">5</span> -d <span class="m">0</span>.5
+</pre></div>
+<pre class="terminal literal-block">
+$ python avro_producer.py -e 5 -d 0.5
+Producing sensor events to topic temperature.
+Press Ctrl-c to exit.
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 0
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 1
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 2
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 3
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 4
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 5
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 6
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 7
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 0
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 1
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 2
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 3
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 4
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 5
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 6
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 7
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 8
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 9
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 10
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 11
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 8
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 9
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 10
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 11
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 12
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 13
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 14
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 15
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 12
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 13
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 14
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 15
+Flushing records...
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 16
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 17
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 18
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 19
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 16
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 17
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 18
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 19
+To continue execution start from event 5
+</pre>
+<p>Let&#8217;s generate some more events. Notice the last line in the execution above. It prints the time step that should be used to continue execution. To do that, we add <tt class="docutils literal"><span class="pre">-t</span> 5</tt> to the&nbsp;command:</p>
+<div class="highlight"><pre><span></span>python avro_producer.py -e <span class="m">5</span> -d <span class="m">0</span>.5 -t <span class="m">5</span>
+</pre></div>
+<pre class="terminal literal-block">
+$ python avro_producer.py -e 5 -d 0.5 -t 5
+Producing sensor events to topic temperature.
+Press Ctrl-c to exit.
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 20
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 21
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 22
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 23
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 24
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 25
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 26
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 27
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 20
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 21
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 22
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 23
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 24
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 25
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 26
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 27
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 28
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 29
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 30
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 31
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 28
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 29
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 30
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 31
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 32
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 33
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 34
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 35
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 32
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 33
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 34
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 35
+Flushing records...
+Sensor Event b'sensor0' successfully produced to temperature [0] at offset 36
+Sensor Event b'sensor1' successfully produced to temperature [0] at offset 37
+Sensor Event b'sensor2' successfully produced to temperature [0] at offset 38
+Sensor Event b'sensor3' successfully produced to temperature [0] at offset 39
+Sensor Event b'sensor4' successfully produced to temperature [1] at offset 36
+Sensor Event b'sensor5' successfully produced to temperature [1] at offset 37
+Sensor Event b'sensor6' successfully produced to temperature [1] at offset 38
+Sensor Event b'sensor7' successfully produced to temperature [1] at offset 39
+To continue execution start from event 10
+</pre>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Remember that when we created the &#8216;temperature&#8217; topic we set the number of partitions to two.
+In the output sample the partition number is shown in the square brackets after the topic name. For example &#8216;temperature [0]&#8217;.
+This means that the event was successfully sent to the temperature topic at partition&nbsp;0.</p>
+<p class="last">Notice that events from the same sensor (e.g., sensor5) always ends up in the same partition (partition [1] in case of sensor5).
+This is enforced by Kafka to guarantee the ordered processing of events per event source.
+This is implemented using the <strong>key</strong> of the produced event which in our case is the sensor id.
+So pay attention to what you choose as the key depending on the&nbsp;application.</p>
+</div>
+</div>
+<div class="section" id="avro-consumer">
+<h3>Avro&nbsp;Consumer</h3>
+<p>The Avro consumer code is similar to the producer code in previous section. It starts with the <strong>&#8220;Event&#8220;</strong> class which is the same
+as the one in the producer code. The rest is similar but works in the other direction. So now we have a <strong>&#8220;dict_to_event&#8220;</strong> helper function that will return an event object and in the <strong>&#8220;main()&#8220;</strong> function we&#8217;ll initialize an Avro deserializer and a consumer. Finally the code loops to poll messages and plot the&nbsp;values.</p>
+<pre class="code python literal-block">
+<span class="c1"># This is a simple example of the SerializingProducer using Avro.</span>
+<span class="c1">#</span>
+
+<span class="kn">from</span> <span class="nn">confluent_kafka</span> <span class="kn">import</span> <span class="n">DeserializingConsumer</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">SchemaRegistryClient</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry.avro</span> <span class="kn">import</span> <span class="n">AvroDeserializer</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.serialization</span> <span class="kn">import</span> <span class="n">StringDeserializer</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">record_subject_name_strategy</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">toml</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;
+    An object representing a sensor event
+
+    Args:
+        id (str): Sensor's id
+
+        timestamp (datetime): timestamp in milliseconds
+
+        value (double): Sensor's reading value
+
+    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">dict_to_event</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;
+    Converts object literal(dict) to an Event instance.
+
+    Args:
+        obj (dict): Object literal(dict)
+
+        ctx (SerializationContext): Metadata pertaining to the serialization
+            operation.
+
+    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">'id'</span><span class="p">],</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s1">'timestamp'</span><span class="p">]),</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">'value'</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># Parse arguments</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">'Consumes events from kafka topic hosted at a HopsWorks cluster.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'config.toml'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Configuration file in toml format.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="s2">&quot;--sensors&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'The total number of sensors to visualize.'</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># Load HopsWorks Kafka configuration</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Kafka schema that this program supports/expects</span>
+    <span class="c1"># The schema will be checked against the schema of the Kafka topic</span>
+    <span class="n">schema_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;
+    {
+      &quot;type&quot;: &quot;record&quot;,
+      &quot;name&quot;: &quot;sensor&quot;,
+      &quot;fields&quot;: [
+        {
+          &quot;name&quot;: &quot;timestamp&quot;,
+          &quot;type&quot;: &quot;long&quot;,
+          &quot;logicalType&quot;: &quot;timestamp-millis&quot;
+        },
+        {
+          &quot;name&quot;: &quot;id&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;name&quot;: &quot;value&quot;,
+          &quot;type&quot;: &quot;double&quot;
+        }
+      ]
+    }
+    &quot;&quot;&quot;</span>
+
+    <span class="c1"># url for the schema registry in HopsWorks REST API services</span>
+    <span class="n">registry_url</span> <span class="o">=</span> <span class="s1">'https://'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span>\
+        <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'base'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/project/'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'id'</span><span class="p">]</span><span class="o">+</span><span class="s1">'/kafka'</span>
+
+    <span class="c1"># Initialise the Confluent schema registry client</span>
+    <span class="n">schema_registry_conf</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'url'</span><span class="p">:</span> <span class="n">registry_url</span><span class="p">,</span> <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'verify'</span><span class="p">]}</span>
+    <span class="n">schema_registry_client</span> <span class="o">=</span> <span class="n">SchemaRegistryClient</span><span class="p">(</span><span class="n">schema_registry_conf</span><span class="p">)</span>
+
+    <span class="c1"># Add the API key required by HopsWorks but not configurable through the confluent schema registry client</span>
+    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
+    <span class="n">schema_registry_client</span><span class="o">.</span><span class="n">_rest_client</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the avro deserializer for the value using the schema</span>
+    <span class="n">avro_deserializer</span> <span class="o">=</span> <span class="n">AvroDeserializer</span><span class="p">(</span><span class="n">schema_registry_client</span><span class="p">,</span>
+                                         <span class="n">schema_str</span><span class="p">,</span>
+                                         <span class="n">dict_to_event</span><span class="p">)</span>
+
+    <span class="c1"># Initialize a simple String deserializer for the key</span>
+    <span class="n">string_deserializer</span> <span class="o">=</span> <span class="n">StringDeserializer</span><span class="p">(</span><span class="s1">'utf_8'</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the consumer</span>
+    <span class="n">consumer_conf</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'bootstrap.servers'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span><span class="o">+</span><span class="s1">':'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'port'</span><span class="p">],</span>
+                     <span class="s1">'security.protocol'</span><span class="p">:</span> <span class="s1">'SSL'</span><span class="p">,</span>
+                     <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'ca_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.certificate.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'certificate_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.password'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_password'</span><span class="p">],</span>
+                     <span class="s1">'key.deserializer'</span><span class="p">:</span> <span class="n">string_deserializer</span><span class="p">,</span>
+                     <span class="s1">'value.deserializer'</span><span class="p">:</span> <span class="n">avro_deserializer</span><span class="p">,</span>
+                     <span class="s1">'group.id'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'consumer'</span><span class="p">][</span><span class="s1">'group_id'</span><span class="p">],</span>
+                     <span class="s1">'auto.offset.reset'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'consumer'</span><span class="p">][</span><span class="s1">'auto_offset_reset'</span><span class="p">],</span>
+                     <span class="p">}</span>
+    <span class="n">consumer</span> <span class="o">=</span> <span class="n">DeserializingConsumer</span><span class="p">(</span><span class="n">consumer_conf</span><span class="p">)</span>
+    <span class="c1"># Subscribe to a topic</span>
+    <span class="n">consumer</span><span class="o">.</span><span class="n">subscribe</span><span class="p">([</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]])</span>
+
+    <span class="c1"># a list of buffers to store data for plotting</span>
+    <span class="n">MAX_BUFFER</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># max events to store for plotting, then graph will scroll</span>
+    <span class="n">buffer</span> <span class="o">=</span> <span class="p">[</span><span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">MAX_BUFFER</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sensors</span><span class="p">)]</span>
+
+    <span class="c1"># Plotting</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">plot</span><span class="p">([])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ax</span><span class="p">]</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">plot</span><span class="p">():</span>
+        <span class="c1"># x is shared, so set lim once</span>
+        <span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">buffer</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)),</span> <span class="n">b</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
+
+    <span class="c1"># loop for consuming events</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>         <span class="c1"># time for replotting every delta seconds</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># plot</span>
+            <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">time</span> <span class="o">&gt;</span> <span class="n">delta</span><span class="p">:</span>
+                <span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+                <span class="n">plot</span><span class="p">()</span>
+
+            <span class="c1"># SIGINT can't be handled when polling, limit timeout to 1 second.</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">event</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">event</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Event record </span><span class="si">{}</span><span class="s2">: id: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                      <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">timestamp: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                      <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">value: </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">key</span><span class="p">(),</span> <span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                              <span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span>
+                              <span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+                <span class="c1"># store event in buffer for plotting</span>
+                <span class="nb">id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">[</span><span class="mi">6</span><span class="p">:])</span>
+                <span class="n">buffer</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">consumer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre>
+<p>Run <tt class="docutils literal">avro_consumer.py</tt> with the command below. It will start receiving and plotting the 10 events we produced in the previous example. After that the program will wait for more events. Keep it running as we&#8217;ll be producing more events&nbsp;soon.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The consumer received the 10 events we generated in the previous section because we set the <tt class="docutils literal">auto.offset.reset</tt> property to <tt class="docutils literal">'earliest'</tt> in our configuration file. This causes a consumer group, when first created, to get all available events in the Kafka topic. Another option is <tt class="docutils literal">'latest'</tt> which will cause the consumer group to get only the current events ignoring old ones. Read more about consumer groups and offset management <a class="reference external" href="https://docs.confluent.io/platform/current/clients/consumer.html">here</a>.</p>
+</div>
+<div class="highlight"><pre><span></span>$ python avro_consumer.py
+</pre></div>
+<pre class="terminal literal-block">
+$ python avro_consumer.py
+Event record sensor4: id: sensor4
+        timestamp: 2021-09-16 18:32:45
+        value: 73.43209881486389
+
+Event record sensor5: id: sensor5
+        timestamp: 2021-09-16 18:32:45
+        value: 53.20542290369634
+
+Event record sensor6: id: sensor6
+        timestamp: 2021-09-16 18:32:45
+        value: -1.6974040527855028
+
+Event record sensor7: id: sensor7
+        timestamp: 2021-09-16 18:32:45
+        value: 34.33728468834174
+
+Event record sensor4: id: sensor4
+        timestamp: 2021-09-16 18:32:46
+        value: 73.99429517973576
+
+Event record sensor5: id: sensor5
+        timestamp: 2021-09-16 18:32:46
+        value: 46.444456025618216
+...
+</pre>
+<p>Keep the <tt class="docutils literal">avro_producer.py</tt> running and try generating 20 more events with the command&nbsp;below.</p>
+<div class="highlight"><pre><span></span>$ python avro_producer.py -e <span class="m">20</span> -d <span class="m">0</span>.5 -t <span class="m">10</span>
+</pre></div>
+<p>The producer will start producing more events and you will see the consumer receiving and plotting them. The output should be similar to the figure&nbsp;below.</p>
+<img alt="Kafka example with one consumer" class="align-center" src="https://alshishtawy.github.io/images/kafka/kafka_prod_one_cons.png" style="width: 100%;" />
+<p>Now try creating another <tt class="docutils literal">avro_consumer.py</tt> in another terminal leaving the previous one&nbsp;running.</p>
+<div class="highlight"><pre><span></span>$ python avro_consumer.py
+</pre></div>
+<p>Then produce 20 more&nbsp;events:</p>
+<div class="highlight"><pre><span></span>$ python avro_producer.py -e <span class="m">20</span> -d <span class="m">0</span>.5 -t <span class="m">30</span>
+</pre></div>
+<p>Notice that now the produced events will be split between the two consumers, or to be more precise, the partitions will be split among the available consumers. Since we created two partitions, we can have a maximum of two consumers. The output should look similar to the image&nbsp;below.</p>
+<img alt="Kafka example with two consumers" class="align-center" src="https://alshishtawy.github.io/images/kafka/kafka_prod_two_cons.png" style="width: 100%;" />
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Kafka remembers the events consumed by a consumer group. So if a consumer is interrupted and then restarted, it will continue from where it stopped. This is achieved through the consumer <strong>commit</strong> the offsets corresponding to the messages it has read. This can be configured to provide different delivery guarantees. The default is <strong>auto-commit</strong> that gives you <strong>at least once</strong> delivery guarantee. You can read more about this topic <a class="reference external" href="https://docs.confluent.io/platform/current/clients/consumer.html">here</a>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="source-code">
+<h2>Source&nbsp;Code</h2>
+<p>All source code is available at <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka">Kafka HopsWorks Examples at&nbsp;GitHub</a></p>
+<!-- https://pythonhosted.org/sphinxjp.themes.basicstrap/sample.html#admonitions-docutils-origin -->
+</div>
+                </article>
+            </aside><!-- /#featured -->
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="https://www.ri.se">RISE AB</a></li>
+                            <li><a href="https://www.sics.se/groups/computer-systems-laboratory-csl">Computer Systems Lab</a></li>
+                            <li><a href="https://www.ri.se/en/ahmad-al-shishtawy">My Page @ RISE</a></li>
+                            <li><a href="http://getpelican.com">Powered by Pelican</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://alshishtawy.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                            <li><a href="https://www.linkedin.com/in/alshishtawy">LinkedIn</a></li>
+                            <li><a href="https://twitter.com/alshishtawy">Twitter</a></li>
+                            <li><a href="https://github.com/alshishtawy/">Github</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+<!--
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>, which takes great advantage of <a href="http://python.org">Python</a>.
+                </address>--><!-- /#about -->
+
+<!--                <p>The theme is by <a href="http://coding.smashingmagazine.com/2009/08/04/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer>--><!-- /#contentinfo -->
+
+    <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-103785875-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+</body>
+</html>
