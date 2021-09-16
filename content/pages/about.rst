@@ -48,6 +48,7 @@ Projects
 
 Guides
 ======
+- A Guide on how to use an `External Kafka Client with HopsWorks`_
 - Getting Started with `Traffic Flow Analysis`_ of sensor data from Motorway Control System using Spark
 
 Open Source
@@ -188,6 +189,7 @@ MeetUps
 .. _ElastMan: {filename}/blogs/elastman.rst
 
 .. _`Traffic Flow Analysis`: {filename}/blogs/trafficflow.rst
+.. _`External Kafka Client with HopsWorks`: {filename}/blogs/kafka_hopsworks.rst
 
 
 

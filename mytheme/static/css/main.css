@@ -23,9 +23,9 @@
 body {
     background: #F5F4EF;
     color: #000305;
-    font-size: 150%; /* Base font size: 14px */
+    font-size: 18px; /* Base font size: 14px */
     font-family: 'Trebuchet MS', Trebuchet, 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    line-height: 1.4;
+    line-height: 1.5;
     margin: 0;
     padding: 0;
     text-align: left;
@@ -73,7 +73,7 @@ h1 a:hover {
 /* Paragraphs */
 div.line-block,
 p { margin-top: 1em;
-    margin-bottom: 1em;}
+    margin-bottom: 1.4em;}
 
 strong, b {font-weight: bold;}
 em, i {font-style: italic;}

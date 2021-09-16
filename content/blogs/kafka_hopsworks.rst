@@ -1,22 +1,22 @@
 ================================================================================================
-The Ultimate Guide on Using an External Python Kafka Client to interact with a Hopsworks Cluster
+The Ultimate Guide to Using an External Python Kafka Client to Interact with a Hopsworks Cluster
 ================================================================================================
 
-:date: 2021-06-21
+:date: 2021-09-16
 :tags: Kafka, Spark, Hopsworks, Python, Stream Processing
 :category: Guides
 :slug: kafka-hopsworks
-:summary: We illustrate how to configure and use a python Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data serialization.
+:summary: We illustrate how to configure and use the python Confluent Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data serialization.
 
 
-In this guide, we illustrate how to configure and use a python Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data serialization.
+In this guide, we illustrate how to configure and use the python Confluent Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data serialization.
 
 This tutorial was tested using Hopsworks version 2.2.
 
 
 Prepare the Environment
 =======================
-We'll start by creating a Kafka topic and downloading security credintials that we'll need in this tutorial.
+We'll start by preparing the schema, creating a Kafka topic, and downloading security credentials that we'll need in this tutorial.
 
 Avro Schema
 -----------
@@ -268,7 +268,15 @@ You will need a working Python environment and the following packages:
 
 .. code-block:: shell
 
-   pip install confluent-kafka hops
+   pip install confluent_kafka requests fastavro toml
+
+For plotting you might need the following packages depending on your environment:
+
+.. code-block:: bash
+
+   pip install matplotlib
+   pip install pyqt5
+   sudo apt install qt5-default
 
 ..
    https://www.confluent.io/blog/avro-kafka-data/
@@ -342,7 +350,7 @@ With all preparation work out of the way, we are now ready to securely send sens
 
 The code starts by defining an **``Event``** class. This is the class for the objects we want to push into Kafka. You can change this class to match your application. The **``event_to_dict``** is a helper function that returns a dictionary representation of an event object to be used by the Avro serializer. Note that the key names should match the field names defined in the schema and also the value types should match those in the schema.
 
-The **``main``** function loads the configuration file and initializes the schema registry client, Avro serializer, and the producer.
+The **``main()``** function loads the configuration file and initializes the schema registry client, Avro serializer, and the producer.
 Then initializes a number of sensors to generate data and finally uses the producer to push the generated data into Kafka.
 
 .. include:: code/kafka/avro_producer.py
@@ -530,10 +538,91 @@ Let's generate some more events. Notice the last line in the execution above. It
 Avro Consumer
 -------------
 
+The Avro consumer code is similar to the producer code in previous section. It starts with the **``Event``** class which is the same
+as the one in the producer code. The rest is similar but works in the other direction. So now we have a **``dict_to_event``** helper function that will return an event object and in the **``main()``** function we'll initialize an Avro deserializer and a consumer. Finally the code loops to poll messages and plot the values.
+
 .. include:: code/kafka/avro_consumer.py
    :code: python
    :start-line: 19
 
+
+Run ``avro_consumer.py`` with the command below. It will start receiving and plotting the 10 events we produced in the previous example. After that the program will wait for more events. Keep it running as we'll be producing more events soon.
+
+.. note::
+
+   The consumer received the 10 events we generated in the previous section because we set the ``auto.offset.reset`` property to ``'earliest'`` in our configuration file. This causes a consumer group, when first created, to get all available events in the Kafka topic. Another option is ``'latest'`` which will cause the consumer group to get only the current events ignoring old ones. Read more about consumer groups and offset management `here <https://docs.confluent.io/platform/current/clients/consumer.html>`_.
+
+.. code-block:: bash
+
+   $ python avro_consumer.py
+
+.. class:: terminal
+
+::
+
+   $ python avro_consumer.py
+   Event record sensor4: id: sensor4
+           timestamp: 2021-09-16 18:32:45
+           value: 73.43209881486389
+
+   Event record sensor5: id: sensor5
+           timestamp: 2021-09-16 18:32:45
+           value: 53.20542290369634
+
+   Event record sensor6: id: sensor6
+           timestamp: 2021-09-16 18:32:45
+           value: -1.6974040527855028
+
+   Event record sensor7: id: sensor7
+           timestamp: 2021-09-16 18:32:45
+           value: 34.33728468834174
+
+   Event record sensor4: id: sensor4
+           timestamp: 2021-09-16 18:32:46
+           value: 73.99429517973576
+
+   Event record sensor5: id: sensor5
+           timestamp: 2021-09-16 18:32:46
+           value: 46.444456025618216
+   ...
+
+
+
+Keep the ``avro_producer.py`` running and try generating 20 more events with the command below.
+
+.. code-block:: bash
+
+   $ python avro_producer.py -e 20 -d 0.5 -t 10
+
+The producer will start producing more events and you will see the consumer receiving and plotting them. The output should be similar to the figure below.
+
+.. image:: {static}/images/kafka/kafka_prod_one_cons.png
+    :alt: Kafka example with one consumer
+    :width: 100%
+    :align: center
+
+Now try creating another ``avro_consumer.py`` in another terminal leaving the previous one running.
+
+.. code-block:: bash
+
+   $ python avro_consumer.py
+
+Then produce 20 more events:
+
+.. code-block:: bash
+
+   $ python avro_producer.py -e 20 -d 0.5 -t 30
+
+Notice that now the produced events will be split between the two consumers, or to be more precise, the partitions will be split among the available consumers. Since we created two partitions, we can have a maximum of two consumers. The output should look similar to the image below.
+
+.. image:: {static}/images/kafka/kafka_prod_two_cons.png
+    :alt: Kafka example with two consumers
+    :width: 100%
+    :align: center
+
+.. note::
+
+   Kafka remembers the events consumed by a consumer group. So if a consumer is interrupted and then restarted, it will continue from where it stopped. This is achieved through the consumer **commit** the offsets corresponding to the messages it has read. This can be configured to provide different delivery guarantees. The default is **auto-commit** that gives you **at least once** delivery guarantee. You can read more about this topic `here <https://docs.confluent.io/platform/current/clients/consumer.html>`_.
 
 
 Source Code

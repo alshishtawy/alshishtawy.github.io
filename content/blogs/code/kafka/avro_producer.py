@@ -31,6 +31,7 @@ import argparse
 from sensor import sensor
 from time import sleep
 
+
 class Event(object):
     """
     An object representing a sensor event
@@ -148,11 +149,14 @@ def main():
     headers={'Authorization': 'ApiKey ' + conf['api']['key']}
     schema_registry_client._rest_client.session.headers.update(headers)
 
-    # Initialize the avro serializer
+    # Initialize the avro serializer for the value using the schema
     avro_serializer = AvroSerializer(schema_registry_client,
                                      schema_str,
                                      event_to_dict,
                                      {'auto.register.schemas': False, 'subject.name.strategy': record_subject_name_strategy})
+
+    # Initialize a simple String serializer for the key
+    string_serializer = StringSerializer('utf_8')
 
     # Initialize the producer
     producer_conf = {'bootstrap.servers': conf['hops']['url']+':'+conf['kafka']['port'],
@@ -161,7 +165,7 @@ def main():
                      'ssl.certificate.location': conf['project']['certificate_file'],
                      'ssl.key.location': conf['project']['key_file'],
                      'ssl.key.password': conf['project']['key_password'],
-                     'key.serializer': StringSerializer('utf_8'),
+                     'key.serializer': string_serializer,
                      'value.serializer': avro_serializer}
     producer = SerializingProducer(producer_conf)
 
@@ -169,25 +173,23 @@ def main():
     start = args.time
     end = start + args.events if args.events > 0 else -1
     sensors = [
-        sensor(baseline=10,  slope=0.1,   period = 100, amplitude= 40, noise_level=5, start=start, end=end),
-        sensor(baseline=10,  slope=0.2,   period =  50, amplitude= 30, noise_level=4, start=start, end=end),
-        sensor(baseline=20,  slope=-0.1,  period = 100, amplitude= 50, noise_level=6, phase=20, start=start, end=end),
-        sensor(baseline=10,  slope=0.1,   period = 100, amplitude= 40, noise_level=0, start=start, end=end),
-        sensor(baseline=30,  slope=-0.1,  period = 100, amplitude= 40, noise_level=5, start=start, end=end),
-        sensor(baseline=40,  slope=0,     period = 200, amplitude= 10, noise_level=4, start=start, end=end),
-        sensor(baseline=0,   slope=0.3,   period = 100, amplitude= 20, noise_level=6, phase=50, start=start, end=end),
-        sensor(baseline=-10, slope=0.1,   period = 100, amplitude= 40, noise_level=9, start=start, end=end),
+        sensor(baseline=10,  slope=0.1,   period=100, amplitude=40, noise_level=5, start=start, end=end),
+        sensor(baseline=10,  slope=0.2,   period=50,  amplitude=30, noise_level=4, start=start, end=end),
+        sensor(baseline=20,  slope=-0.1,  period=100, amplitude=50, noise_level=6, phase=20, start=start, end=end),
+        sensor(baseline=10,  slope=0.1,   period=100, amplitude=40, noise_level=0, start=start, end=end),
+        sensor(baseline=30,  slope=-0.1,  period=100, amplitude=40, noise_level=5, start=start, end=end),
+        sensor(baseline=40,  slope=0,     period=200, amplitude=10, noise_level=4, start=start, end=end),
+        sensor(baseline=0,   slope=0.3,   period=100, amplitude=20, noise_level=6, phase=50, start=start, end=end),
+        sensor(baseline=-10, slope=0.1,   period=100, amplitude=40, noise_level=9, start=start, end=end),
         ]
 
     # Start producing events
     print("Producing sensor events to topic {}.".format(conf['kafka']['topic']))
     print('Press Ctrl-c to exit.')
-
-    # a counter for the number of time steps generated
-    time_step = start
+    time_step = start     # a counter for the number of time steps generated
     try:
         for data in zip(*sensors):
-            timestamp=datetime.now()
+            timestamp = datetime.now()
             time_step += 1
             for i, d in enumerate(data):
                 # Serve on_delivery callbacks from previous calls to produce()
