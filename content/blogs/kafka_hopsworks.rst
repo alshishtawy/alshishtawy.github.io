@@ -712,6 +712,64 @@ Now you can use the client to query the schema registry. In this example we use 
    {"type":"record","name":"sensor","fields":[{"name":"timestamp","type":"long","logicalType":"timestamp-millis"},{"name":"id","type":"string"},{"name":"value","type":"double"}]}
 
 
+Simple Producer/Consumer (Optional)
+===================================
+
+For completeness we include the code for `simple_producer.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/simple_producer.py>`_ and `simple_consumer.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/simple_producer.py>`_. By simple we mean that it doesn't use Avro schemas and doesn't validates schema. Kafka only sees blobs of bytes. It is up to you to keep track of what is stored in the topic and how to interpret the value.
+
+.. include:: code/kafka/simple_producer.py
+   :code: python
+
+
+.. include:: code/kafka/simple_consumer.py
+   :code: python
+
+.. warning::
+
+   Before running the simple_producer.py example make sure to create a new topic to avoid conflicts with the Avro examples.
+   Also make a copy of your config.toml file and change the **topic** to match your new topic and use a different **group_id** than the one used in the Avro examples.
+   When running the example use the -c flag to point to your new configuration file.
+
+.. code-block:: bash
+
+   $ python simple_producer.py -c config2.toml
+
+.. class:: terminal
+
+::
+
+   Message delivered to strings [0]
+   Message delivered to strings [0]
+   Message delivered to strings [0]
+   Message delivered to strings [0]
+   Message delivered to strings [0]
+   Message delivered to strings [0]
+   Message delivered to strings [0]
+   Message delivered to strings [1]
+   Message delivered to strings [1]
+   Message delivered to strings [1]
+
+.. code-block:: bash
+
+   $ python simple_consumer.py -c config2.toml
+
+
+.. class:: terminal
+
+::
+
+   Received message: Hello
+   Received message: Kafka!
+   Received message: I'm
+   Received message: a
+   Received message: simple
+   Received message: client
+   Received message: sending
+   Received message: in
+   Received message: some
+   Received message: strings.
+
+
 
 Source Code
 ===========
