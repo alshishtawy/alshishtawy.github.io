@@ -625,6 +625,94 @@ Notice that now the produced events will be split between the two consumers, or 
    Kafka remembers the events consumed by a consumer group. So if a consumer is interrupted and then restarted, it will continue from where it stopped. This is achieved through the consumer **commit** the offsets corresponding to the messages it has read. This can be configured to provide different delivery guarantees. The default is **auto-commit** that gives you **at least once** delivery guarantee. You can read more about this topic `here <https://docs.confluent.io/platform/current/clients/consumer.html>`_.
 
 
+Schema Registry Clients (Optional)
+==================================
+
+In some cases you might need to programmatically access the schema registry and
+retrieve the schema associated with a topic or by schema name. In this section
+we'll show three different ways to do this. The source code for the examples is available at `schema_examples.py <https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/schema_examples.py>`_.
+
+To run this example you will need hops-util-py which is a helper library for HopsWorks that hides some of the configurations and initializations needed to access HopsWorks services. Install it with the following command.
+
+.. code-block:: bash
+
+   $ pip install hops
+
+The code starts by importing required libraries and loading the configuration file.
+
+.. include:: code/kafka/schema_examples.py
+   :code: python
+   :end-before: ### Example 1
+
+
+The **first example** uses the HopsWorks REST API directly to query the schema registry. You need to construct a url for your query following the API documentation. In our case that is `getTopicSubject <https://app.swaggerhub.com/apis-docs/logicalclocks/hopsworks-api/2.2.0#/Project%20Service/getTopicSubject>`_. Then use a library, such as ``requests`` to send your query and retrieve the response. Note that you need to add your API Key to the request header.
+
+.. include:: code/kafka/schema_examples.py
+   :code: python
+   :start-after: ### Example 1
+   :end-before: ### Example 2
+
+.. class:: terminal
+
+::
+
+   Example 1: Using HopsWorks REST API
+   ===================================
+
+   list all available schemas for your project
+   url: https://192.168.1.10/hopsworks-api/api/project/1143/kafka/subjects
+   schemas: [inferenceschema, sensor]
+
+   get the schema associated with a topic using the topic name
+   url: https://192.168.1.10/hopsworks-api/api/project/1143/kafka/topics/temperature/subjects
+   schema for topic temperature using HopsWorks REST API:
+   {"type":"record","name":"sensor","fields":[{"name":"timestamp","type":"long","logicalType":"timestamp-millis"},{"name":"id","type":"string"},{"name":"value","type":"double"}]}
+
+
+The **second example** uses the handy ``hops-util-py`` library. All you need is to connect to your project using the project name, url, and API Key. Then use ``kafka.get_schema('topic_name'))`` to get the schema.
+
+.. include:: code/kafka/schema_examples.py
+   :code: python
+   :start-after: ### Example 2
+   :end-before: ### Example 3
+
+.. class:: terminal
+
+::
+
+   Example 2: Using hops-util-py
+   =============================
+
+   get the schema associated with a topic using the topic name
+   schema for topic temperature using Hops Util package:
+   {"type":"record","name":"sensor","fields":[{"name":"timestamp","type":"long","logicalType":"timestamp-millis"},{"name":"id","type":"string"},{"name":"value","type":"double"}]}
+
+
+The **third example** uses the Confluent Schema Registry client. You will need to construct the url for the schema registry of your project then use it to initialize the schema registry client. You will also need to add the API Key to the header.
+
+Now you can use the client to query the schema registry. In this example we use ``sc.get_latest_version('schema_name')`` to retrieve the schema.
+
+.. include:: code/kafka/schema_examples.py
+   :code: python
+   :start-after: ### Example 3
+
+.. class:: terminal
+
+::
+
+   Example 3: Using the Confluent Schema Registry client
+   =====================================================
+
+   registry url: https://109.225.89.144/hopsworks-api/api/project/1143/kafka
+   get the schema using schema name
+   id: 1030
+   subject: sensor
+   version: 1
+   schema with confluent schema client:
+   {"type":"record","name":"sensor","fields":[{"name":"timestamp","type":"long","logicalType":"timestamp-millis"},{"name":"id","type":"string"},{"name":"value","type":"double"}]}
+
+
+
 Source Code
 ===========
 All source code is available at `Kafka HopsWorks Examples at GitHub`_
