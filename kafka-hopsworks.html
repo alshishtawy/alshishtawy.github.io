@@ -250,34 +250,39 @@ You can test it yourself by executing the&nbsp;file.</p>
 <span class="c1"># Inspired by code from https://github.com/tensorflow/examples/blob/master/courses/udacity_intro_to_tensorflow_for_deep_learning/l08c01_common_patterns.ipynb</span>
 
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
-<span class="kn">import</span> <span class="nn">math</span><span class="o">,</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">random</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 
 <span class="k">def</span> <span class="nf">trend</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">slope</span> <span class="o">*</span> <span class="n">time</span>
 
+
 <span class="k">def</span> <span class="nf">seasonal_pattern</span><span class="p">(</span><span class="n">season_time</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Just an arbitrary pattern, you can change it if you wish&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">season_time</span> <span class="o">&lt;</span> <span class="mf">0.4</span><span class="p">:</span>
-        <span class="k">return</span>  <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">season_time</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">season_time</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">season_time</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">seasonality</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Repeats the same pattern at each period&quot;&quot;&quot;</span>
     <span class="n">season_time</span> <span class="o">=</span> <span class="p">((</span><span class="n">time</span> <span class="o">+</span> <span class="n">phase</span><span class="p">)</span> <span class="o">%</span> <span class="n">period</span><span class="p">)</span> <span class="o">/</span> <span class="n">period</span>
     <span class="k">return</span> <span class="n">amplitude</span> <span class="o">*</span> <span class="n">seasonal_pattern</span><span class="p">(</span><span class="n">season_time</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">white_noise</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">normalvariate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise_level</span>
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">normalvariate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">noise_level</span>
+
 
 <span class="c1"># Combines the above functions to emulate a sensor.</span>
 <span class="c1"># Uses Python generator function</span>
-<span class="k">def</span> <span class="nf">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">period</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">time</span> <span class="o">=</span> <span class="n">start</span>
-    <span class="k">while</span><span class="p">(</span><span class="n">time</span><span class="o">&lt;</span><span class="n">end</span> <span class="ow">or</span> <span class="n">end</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">time</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">or</span> <span class="n">end</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
         <span class="k">yield</span> <span class="n">baseline</span> <span class="o">+</span> <span class="n">trend</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">slope</span><span class="p">)</span> \
             <span class="o">+</span> <span class="n">seasonality</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span> \
             <span class="o">+</span> <span class="n">white_noise</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">noise_level</span><span class="p">)</span>
@@ -288,14 +293,14 @@ You can test it yourself by executing the&nbsp;file.</p>
 
     <span class="c1"># initialize a number of sensors</span>
     <span class="n">sensors</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
-        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>  <span class="n">period</span> <span class="o">=</span>  <span class="mi">80</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
-        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">slope</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">period</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
-        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>  <span class="n">period</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>  <span class="n">amplitude</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">slope</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
+        <span class="n">sensor</span><span class="p">(</span><span class="n">baseline</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>  <span class="n">period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">amplitude</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mi">1000</span><span class="p">),</span>
         <span class="p">]</span>
 
     <span class="c1"># a list of buffers to emulate receving data</span>
-    <span class="n">data_buffer</span> <span class="o">=</span>  <span class="p">[</span><span class="n">deque</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sensors</span><span class="p">))]</span>
+    <span class="n">data_buffer</span> <span class="o">=</span> <span class="p">[</span><span class="n">deque</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sensors</span><span class="p">))]</span>
 
     <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sensors</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">plot</span><span class="p">([])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ax</span><span class="p">]</span>
@@ -306,11 +311,9 @@ You can test it yourself by executing the&nbsp;file.</p>
             <span class="n">b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="n">l</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)),</span> <span class="n">b</span><span class="p">)</span>
             <span class="n">a</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
-            <span class="n">a</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">+</span><span class="mi">10</span><span class="p">)</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">flush_events</span><span class="p">()</span>
-
-
 
     <span class="c1"># pause execution so you can examin the figure</span>
     <span class="nb">input</span><span class="p">(</span><span class="s2">&quot;Press Enter to continue...&quot;</span><span class="p">)</span>
@@ -908,6 +911,301 @@ Event record sensor5: id: sensor5
 <p class="last">Kafka remembers the events consumed by a consumer group. So if a consumer is interrupted and then restarted, it will continue from where it stopped. This is achieved through the consumer <strong>commit</strong> the offsets corresponding to the messages it has read. This can be configured to provide different delivery guarantees. The default is <strong>auto-commit</strong> that gives you <strong>at least once</strong> delivery guarantee. You can read more about this topic <a class="reference external" href="https://docs.confluent.io/platform/current/clients/consumer.html">here</a>.</p>
 </div>
 </div>
+</div>
+<div class="section" id="schema-registry-clients-optional">
+<h2>Schema Registry Clients&nbsp;(Optional)</h2>
+<p>In some cases you might need to programmatically access the schema registry and
+retrieve the schema associated with a topic or by schema name. In this section
+we&#8217;ll show three different ways to do this. The source code for the examples is available at <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/schema_examples.py">schema_examples.py</a>.</p>
+<p>To run this example you will need hops-util-py which is a helper library for HopsWorks that hides some of the configurations and initializations needed to access HopsWorks services. Install it with the following&nbsp;command.</p>
+<div class="highlight"><pre><span></span>$ pip install hops
+</pre></div>
+<p>The code starts by importing required libraries and loading the configuration&nbsp;file.</p>
+<pre class="code python literal-block">
+<span class="kn">from</span> <span class="nn">hops</span> <span class="kn">import</span> <span class="n">project</span>
+<span class="kn">from</span> <span class="nn">hops</span> <span class="kn">import</span> <span class="n">kafka</span>
+<span class="kn">from</span> <span class="nn">hops</span> <span class="kn">import</span> <span class="n">util</span><span class="p">,</span> <span class="n">constants</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka</span> <span class="kn">import</span> <span class="n">avro</span>
+<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">SchemaRegistryClient</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">toml</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+<span class="c1">### Examples on how to interact with HopsWorks Schema Registry service</span>
+<span class="c1">### externally from outside the HopsWorks cluster to query the schema</span>
+
+
+<span class="c1">### Hops Configuration</span>
+
+<span class="c1"># Parse arguments</span>
+<span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">'Examples using different methods to access'</span>
+                                 <span class="s1">' HopsWorks Schema Registry externally from outside the cluster.'</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'config.toml'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Configuration file in toml format.'</span><span class="p">)</span>
+<span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+</pre>
+<p>The <strong>first example</strong> uses the HopsWorks <span class="caps">REST</span> <span class="caps">API</span> directly to query the schema registry. You need to construct a url for your query following the <span class="caps">API</span> documentation. In our case that is <a class="reference external" href="https://app.swaggerhub.com/apis-docs/logicalclocks/hopsworks-api/2.2.0#/Project%20Service/getTopicSubject">getTopicSubject</a>. Then use a library, such as <tt class="docutils literal">requests</tt> to send your query and retrieve the response. Note that you need to add your <span class="caps">API</span> Key to the request&nbsp;header.</p>
+<pre class="code python literal-block">
+<span class="c1">### Get schema using HopsWorks REST API</span>
+<span class="c1">### https://app.swaggerhub.com/apis-docs/logicalclocks/hopsworks-api/2.2.0#/Project%20Service/getTopicSubject</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Example 1: Using HopsWorks REST API'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'==================================='</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="c1"># Security header with the API Key</span>
+<span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
+
+<span class="c1"># list all available schemas for your project</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'list all available schemas for your project'</span><span class="p">)</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s1">'https://'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'base'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/project/'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'id'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/kafka/subjects'</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'url: '</span> <span class="o">+</span> <span class="n">url</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'verify'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'schemas: '</span> <span class="o">+</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="c1"># get the schema associated with a topic using the topic name</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'get the schema associated with a topic using the topic name'</span><span class="p">)</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s1">'https://'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'base'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/project/'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'id'</span><span class="p">]</span> \
+                 <span class="o">+</span> <span class="s1">'/kafka/topics/'</span>  <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/subjects'</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'url: '</span> <span class="o">+</span> <span class="n">url</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'verify'</span><span class="p">])</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">'schema'</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'schema for topic </span><span class="si">{}</span><span class="s1"> using HopsWorks REST API:'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+</pre>
+<pre class="terminal literal-block">
+Example 1: Using HopsWorks REST API
+===================================
+
+list all available schemas for your project
+url: https://192.168.1.10/hopsworks-api/api/project/1143/kafka/subjects
+schemas: [inferenceschema, sensor]
+
+get the schema associated with a topic using the topic name
+url: https://192.168.1.10/hopsworks-api/api/project/1143/kafka/topics/temperature/subjects
+schema for topic temperature using HopsWorks REST API:
+{&quot;type&quot;:&quot;record&quot;,&quot;name&quot;:&quot;sensor&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;timestamp&quot;,&quot;type&quot;:&quot;long&quot;,&quot;logicalType&quot;:&quot;timestamp-millis&quot;},{&quot;name&quot;:&quot;id&quot;,&quot;type&quot;:&quot;string&quot;},{&quot;name&quot;:&quot;value&quot;,&quot;type&quot;:&quot;double&quot;}]}
+</pre>
+<p>The <strong>second example</strong> uses the handy <tt class="docutils literal"><span class="pre">hops-util-py</span></tt> library. All you need is to connect to your project using the project name, url, and <span class="caps">API</span> Key. Then use <tt class="docutils literal"><span class="pre">kafka.get_schema('topic_name'))</span></tt> to get the&nbsp;schema.</p>
+<pre class="code python literal-block">
+<span class="c1">### Get schema the easy way</span>
+<span class="c1">### Using hops-util-py</span>
+<span class="c1">### For this to work you need to add &quot;project&quot; to your API key scope in HopsWorks settings so it includes both [&quot;KAFKA&quot;,&quot;PROJECT&quot;]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Example 2: Using hops-util-py'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'============================='</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="c1"># connect to the project to setup environment variables. Similar to what happens on Hopsworks cluster</span>
+<span class="c1"># so you can use most of the hops util library</span>
+<span class="n">project</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'name'</span><span class="p">],</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">],</span> <span class="n">api_key</span><span class="o">=</span><span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key_file'</span><span class="p">])</span>
+
+<span class="c1"># get the schema associated with a topic using the topic name</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'get the schema associated with a topic using the topic name'</span><span class="p">)</span>
+
+<span class="n">schema</span> <span class="o">=</span> <span class="n">kafka</span><span class="o">.</span><span class="n">get_schema</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'schema for topic </span><span class="si">{}</span><span class="s1"> using Hops Util package:'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+</pre>
+<pre class="terminal literal-block">
+Example 2: Using hops-util-py
+=============================
+
+get the schema associated with a topic using the topic name
+schema for topic temperature using Hops Util package:
+{&quot;type&quot;:&quot;record&quot;,&quot;name&quot;:&quot;sensor&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;timestamp&quot;,&quot;type&quot;:&quot;long&quot;,&quot;logicalType&quot;:&quot;timestamp-millis&quot;},{&quot;name&quot;:&quot;id&quot;,&quot;type&quot;:&quot;string&quot;},{&quot;name&quot;:&quot;value&quot;,&quot;type&quot;:&quot;double&quot;}]}
+</pre>
+<p>The <strong>third example</strong> uses the Confluent Schema Registry client. You will need to construct the url for the schema registry of your project then use it to initialize the schema registry client. You will also need to add the <span class="caps">API</span> Key to the&nbsp;header.</p>
+<p>Now you can use the client to query the schema registry. In this example we use <tt class="docutils literal"><span class="pre">sc.get_latest_version('schema_name')</span></tt> to retrieve the&nbsp;schema.</p>
+<pre class="code python literal-block">
+<span class="c1">### Get the schema using the Confluent Schema Registry client</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Example 3: Using the Confluent Schema Registry client'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'====================================================='</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="n">registry_url</span> <span class="o">=</span> <span class="s1">'https://'</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span>\
+    <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'base'</span><span class="p">]</span> <span class="o">+</span> <span class="s1">'/project/'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'id'</span><span class="p">]</span><span class="o">+</span><span class="s1">'/kafka'</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'registry url: '</span> <span class="o">+</span> <span class="n">registry_url</span><span class="p">)</span>
+
+<span class="n">sc</span> <span class="o">=</span> <span class="n">SchemaRegistryClient</span><span class="p">({</span><span class="s1">'url'</span><span class="p">:</span> <span class="n">registry_url</span><span class="p">,</span> <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'verify'</span><span class="p">]})</span>
+
+<span class="c1"># Add the API key required by HopsWorks but not configurable through the confluent schema registry client</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">_rest_client</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
+
+<span class="c1"># here we must use the schema name to look it up as confluent allows multiple schemas per topic</span>
+<span class="c1"># see: https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#subject-name-strategy</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'get the schema using schema name'</span><span class="p">)</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">get_latest_version</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'schema'</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'id: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">schema_id</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'subject: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">subject</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'version: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">version</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'schema with confluent schema client:'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">schema_str</span><span class="p">)</span>
+</pre>
+<pre class="terminal literal-block">
+Example 3: Using the Confluent Schema Registry client
+=====================================================
+
+registry url: https://109.225.89.144/hopsworks-api/api/project/1143/kafka
+get the schema using schema name
+id: 1030
+subject: sensor
+version: 1
+schema with confluent schema client:
+{&quot;type&quot;:&quot;record&quot;,&quot;name&quot;:&quot;sensor&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;timestamp&quot;,&quot;type&quot;:&quot;long&quot;,&quot;logicalType&quot;:&quot;timestamp-millis&quot;},{&quot;name&quot;:&quot;id&quot;,&quot;type&quot;:&quot;string&quot;},{&quot;name&quot;:&quot;value&quot;,&quot;type&quot;:&quot;double&quot;}]}
+</pre>
+</div>
+<div class="section" id="simple-producer-consumer-optional">
+<h2>Simple Producer/Consumer&nbsp;(Optional)</h2>
+<p>For completeness we include the code for <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/simple_producer.py">simple_producer.py</a> and <a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/blob/main/kafka/simple_producer.py">simple_consumer.py</a>. By simple we mean that it doesn&#8217;t use Avro schemas and doesn&#8217;t validates schema. Kafka only sees blobs of bytes. It is up to you to keep track of what is stored in the topic and how to interpret the&nbsp;value.</p>
+<pre class="code python literal-block">
+<span class="kn">from</span> <span class="nn">confluent_kafka</span> <span class="kn">import</span> <span class="n">Producer</span>
+<span class="kn">import</span> <span class="nn">toml</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+
+<span class="k">def</span> <span class="nf">delivery_report</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Called once for each message produced to indicate delivery result.
+        Triggered by poll() or flush(). &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Message delivery failed: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Message delivered to </span><span class="si">{}</span><span class="s1"> [</span><span class="si">{}</span><span class="s1">]'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">topic</span><span class="p">(),</span> <span class="n">msg</span><span class="o">.</span><span class="n">partition</span><span class="p">()))</span>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+
+    <span class="c1"># Parse arguments</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">'A simple Producer example to produce strings'</span>
+                                     <span class="s1">' into a kafka topic hosted at a HopsWorks cluster.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'config.toml'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Configuration file in toml format.'</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># Load HopsWorks Kafka configuration</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the Producer</span>
+    <span class="n">producer_conf</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'bootstrap.servers'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span><span class="o">+</span><span class="s1">':'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'port'</span><span class="p">],</span>
+                     <span class="s1">'security.protocol'</span><span class="p">:</span> <span class="s1">'SSL'</span><span class="p">,</span>
+                     <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'ca_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.certificate.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'certificate_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.password'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_password'</span><span class="p">]}</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">Producer</span><span class="p">(</span><span class="n">producer_conf</span><span class="p">)</span>
+
+
+    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="s2">&quot;Hello Kafka! I'm a simple client sending in some strings.&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+        <span class="c1"># Trigger any available delivery report callbacks from previous produce() calls</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Asynchronously produce a message, the delivery report callback</span>
+        <span class="c1"># will be triggered from poll() above, or flush() below, when the message has</span>
+        <span class="c1"># been successfully delivered or failed permanently.</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">produce</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">),</span> <span class="n">callback</span><span class="o">=</span><span class="n">delivery_report</span><span class="p">)</span>
+
+        <span class="c1"># Wait for any outstanding messages to be delivered and delivery report</span>
+        <span class="c1"># callbacks to be triggered.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre>
+<pre class="code python literal-block">
+<span class="kn">from</span> <span class="nn">confluent_kafka</span> <span class="kn">import</span> <span class="n">Consumer</span>
+<span class="kn">import</span> <span class="nn">toml</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+
+    <span class="c1"># Parse arguments</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">'A simple Consumer example to consume strings'</span>
+                                     <span class="s1">' from a kafka topic hosted at a HopsWorks cluster.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'config.toml'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Configuration file in toml format.'</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># Load HopsWorks Kafka configuration</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">toml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Initialize the Consumer</span>
+    <span class="n">consumer_conf</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'bootstrap.servers'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'hops'</span><span class="p">][</span><span class="s1">'url'</span><span class="p">]</span><span class="o">+</span><span class="s1">':'</span><span class="o">+</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'port'</span><span class="p">],</span>
+                     <span class="s1">'security.protocol'</span><span class="p">:</span> <span class="s1">'SSL'</span><span class="p">,</span>
+                     <span class="s1">'ssl.ca.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'ca_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.certificate.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'certificate_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.location'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_file'</span><span class="p">],</span>
+                     <span class="s1">'ssl.key.password'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'project'</span><span class="p">][</span><span class="s1">'key_password'</span><span class="p">],</span>
+                     <span class="s1">'group.id'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'consumer'</span><span class="p">][</span><span class="s1">'group_id'</span><span class="p">],</span>
+                     <span class="s1">'auto.offset.reset'</span><span class="p">:</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'consumer'</span><span class="p">][</span><span class="s1">'auto_offset_reset'</span><span class="p">],</span>
+                     <span class="p">}</span>
+
+    <span class="n">consumer</span> <span class="o">=</span> <span class="n">Consumer</span><span class="p">(</span><span class="n">consumer_conf</span><span class="p">)</span>
+
+    <span class="c1"># Subscribe to topics</span>
+    <span class="n">consumer</span><span class="o">.</span><span class="n">subscribe</span><span class="p">([</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]])</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">consumer</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">msg</span><span class="o">.</span><span class="n">error</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Consumer error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">error</span><span class="p">()))</span>
+                <span class="k">continue</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'Received message: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">value</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">consumer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Before running the simple_producer.py example make sure to create a new topic to avoid conflicts with the Avro examples.
+Also make a copy of your config.toml file and change the <strong>topic</strong> to match your new topic and use a different <strong>group_id</strong> than the one used in the Avro examples.
+When running the example use the -c flag to point to your new configuration&nbsp;file.</p>
+</div>
+<div class="highlight"><pre><span></span>$ python simple_producer.py -c config2.toml
+</pre></div>
+<pre class="terminal literal-block">
+Message delivered to strings [0]
+Message delivered to strings [0]
+Message delivered to strings [0]
+Message delivered to strings [0]
+Message delivered to strings [0]
+Message delivered to strings [0]
+Message delivered to strings [0]
+Message delivered to strings [1]
+Message delivered to strings [1]
+Message delivered to strings [1]
+</pre>
+<div class="highlight"><pre><span></span>$ python simple_consumer.py -c config2.toml
+</pre></div>
+<pre class="terminal literal-block">
+Received message: Hello
+Received message: Kafka!
+Received message: I'm
+Received message: a
+Received message: simple
+Received message: client
+Received message: sending
+Received message: in
+Received message: some
+Received message: strings.
+</pre>
 </div>
 <div class="section" id="source-code">
 <h2>Source&nbsp;Code</h2>
