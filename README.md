@@ -47,7 +47,7 @@ Warning! This will over write the master branch. For this to work, make sure tha
 
 ```bash
 # Publish
-invoke gh_pages
+invoke gh-pages
 ```
 
 

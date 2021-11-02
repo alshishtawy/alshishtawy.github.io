@@ -41,8 +41,10 @@ For more details about declaring Avro schemas and supported data types, check th
      "fields": [
        {
          "name": "timestamp",
-         "type": "long",
-         "logicalType": "timestamp-millis"
+         "type": {
+	   "type": "long",
+	   "logicalType": "timestamp-millis"
+	   }
        },
        {
          "name": "id",
@@ -54,6 +56,7 @@ For more details about declaring Avro schemas and supported data types, check th
        }
      ]
    }
+
 
 
 To register the above schema in Hopsworks, open the schemas settings in the Kafka tab and select **New Avro Schema**
