@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Ahmad Al-Shishtawy - Guides</title><link href="https://alshishtawy.github.io/" rel="alternate"></link><link href="https://alshishtawy.github.io/feeds/guides.atom.xml" rel="self"></link><id>https://alshishtawy.github.io/</id><updated>2021-09-16T00:00:00+02:00</updated><subtitle>Senior Researcher, PhD</subtitle><entry><title>The Ultimate Guide to Using an External Python Kafka Client to Interact with a Hopsworks Cluster</title><link href="https://alshishtawy.github.io/kafka-hopsworks.html" rel="alternate"></link><published>2021-09-16T00:00:00+02:00</published><updated>2021-09-16T00:00:00+02:00</updated><author><name>Ahmad Al-Shishtawy</name></author><id>tag:alshishtawy.github.io,2021-09-16:/kafka-hopsworks.html</id><summary type="html">&lt;p class="first last"&gt;We illustrate how to configure and use the python Confluent Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data&amp;nbsp;serialization.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Ahmad Al-Shishtawy - Guides</title><link href="https://alshishtawy.github.io/" rel="alternate"></link><link href="https://alshishtawy.github.io/feeds/guides.atom.xml" rel="self"></link><id>https://alshishtawy.github.io/</id><updated>2021-10-06T00:00:00+02:00</updated><subtitle>Senior Researcher, PhD</subtitle><subtitle>Senior Researcher, PhD</subtitle><entry><title>Spark it Up</title><link href="https://alshishtawy.github.io/kafka-spark.html" rel="alternate"></link><published>2021-10-06T00:00:00+02:00</published><updated>2021-10-06T00:00:00+02:00</updated><author><name>Ahmad Al-Shishtawy</name></author><id>tag:alshishtawy.github.io,2021-10-06:/kafka-spark.html</id><summary type="html">&lt;p class="first last"&gt;We show how to use Spark and Jupyter notebooks to store, process, and visualize events in Kafka on&amp;nbsp;Hopsworks.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;In this guide, We show how to use Spark and Jupyter notebooks to store, process, and visualize events in Kafka on Hopsworks. This is &lt;strong&gt;part two&lt;/strong&gt; in a series of tutorials looking into how to work with streaming events using the HopsWorks platform. The examples in this guid builds on the previous examples, so make sure to read &lt;a class="reference external" href="https://alshishtawy.github.io/kafka-hopsworks.html"&gt;part one&lt;/a&gt;&amp;nbsp;first.&lt;/p&gt;
+&lt;p&gt;This tutorial was tested using Hopsworks version&amp;nbsp;2.2.&lt;/p&gt;
+&lt;div class="section" id="store-events-permanently"&gt;
+&lt;h2&gt;Store Events&amp;nbsp;Permanently&lt;/h2&gt;
+&lt;p&gt;We&amp;#8217;ll start by preparing the schema, creating a Kafka topic, and downloading security credentials that we&amp;#8217;ll need in this&amp;nbsp;tutorial.&lt;/p&gt;
+&lt;p&gt;Read the &lt;a class="reference external" href="https://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html"&gt;Kafka Spark Integration&lt;/a&gt;&amp;nbsp;docs&lt;/p&gt;
+&lt;div class="admonition note"&gt;
+&lt;p class="first admonition-title"&gt;Note&lt;/p&gt;
+&lt;p class="last"&gt;For streaming queries, the &lt;tt class="docutils literal"&gt;startingOffsets&lt;/tt&gt; only applies when a &lt;strong&gt;new query&lt;/strong&gt; is started, and that resuming will always pick up from where the query left off. Newly discovered partitions during a query will start at&amp;nbsp;earliest.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="source-code"&gt;
+&lt;h2&gt;Source&amp;nbsp;Code&lt;/h2&gt;
+&lt;p&gt;All source code is available at &lt;a class="reference external" href="https://github.com/alshishtawy/hopsworks-examples/tree/main/kafka"&gt;Kafka HopsWorks Examples at&amp;nbsp;GitHub&lt;/a&gt;&lt;/p&gt;
+&lt;!-- https://pythonhosted.org/sphinxjp.themes.basicstrap/sample.html#admonitions-docutils-origin --&gt;
+&lt;/div&gt;
+</content><category term="Guides"></category><category term="Kafka"></category><category term="Spark"></category><category term="Hopsworks"></category><category term="Python"></category><category term="Stream Processing"></category></entry><entry><title>The Ultimate Guide to Using an External Python Kafka Client to Interact with a Hopsworks Cluster</title><link href="https://alshishtawy.github.io/kafka-hopsworks.html" rel="alternate"></link><published>2021-09-16T00:00:00+02:00</published><updated>2021-09-16T00:00:00+02:00</updated><author><name>Ahmad Al-Shishtawy</name></author><id>tag:alshishtawy.github.io,2021-09-16:/kafka-hopsworks.html</id><summary type="html">&lt;p class="first last"&gt;We illustrate how to configure and use the python Confluent Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data&amp;nbsp;serialization.&lt;/p&gt;
 </summary><content type="html">&lt;p&gt;In this guide, we illustrate how to configure and use the python Confluent Kafka client to interact externally with a Hopsworks cluster. This include how to publish (write) and subscribe to (read) streams of events and how to interact with the schema registry and use Avro for data&amp;nbsp;serialization.&lt;/p&gt;
 &lt;p&gt;This tutorial was tested using Hopsworks version&amp;nbsp;2.2.&lt;/p&gt;
 &lt;div class="section" id="prepare-the-environment"&gt;
@@ -20,8 +37,10 @@ For more details about declaring Avro schemas and supported data types, check th
   &lt;span class="nt"&gt;&amp;quot;fields&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
     &lt;span class="p"&gt;{&lt;/span&gt;
       &lt;span class="nt"&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;timestamp&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-      &lt;span class="nt"&gt;&amp;quot;type&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;long&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-      &lt;span class="nt"&gt;&amp;quot;logicalType&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;timestamp-millis&amp;quot;&lt;/span&gt;
+      &lt;span class="nt"&gt;&amp;quot;type&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="nt"&gt;&amp;quot;type&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;long&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="nt"&gt;&amp;quot;logicalType&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;timestamp-millis&amp;quot;&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
     &lt;span class="p"&gt;},&lt;/span&gt;
     &lt;span class="p"&gt;{&lt;/span&gt;
       &lt;span class="nt"&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;id&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
@@ -309,7 +328,7 @@ Then initializes a number of sensors to generate data and finally uses the produ
     Args:
         id (str): Sensor's id
 
-        timestamp (datetime): timestamp in milliseconds
+        timestamp (datetime): timestamp when the event happened
 
         value (double): Sensor's reading value
 
@@ -335,7 +354,7 @@ Then initializes a number of sensors to generate data and finally uses the produ
 
     &amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;dict&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;id&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;event&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-                &lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;datetime&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;event&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+                &lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;event&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
                 &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;event&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
 
@@ -392,8 +411,10 @@ Then initializes a number of sensors to generate data and finally uses the produ
       &amp;quot;fields&amp;quot;: [
         {
           &amp;quot;name&amp;quot;: &amp;quot;timestamp&amp;quot;,
-          &amp;quot;type&amp;quot;: &amp;quot;long&amp;quot;,
-          &amp;quot;logicalType&amp;quot;: &amp;quot;timestamp-millis&amp;quot;
+          &amp;quot;type&amp;quot;: {
+            &amp;quot;type&amp;quot;: &amp;quot;long&amp;quot;,
+            &amp;quot;logicalType&amp;quot;: &amp;quot;timestamp-millis&amp;quot;
+          }
         },
         {
           &amp;quot;name&amp;quot;: &amp;quot;id&amp;quot;,
@@ -416,7 +437,7 @@ Then initializes a number of sensors to generate data and finally uses the produ
     &lt;span class="n"&gt;schema_registry_client&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SchemaRegistryClient&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;schema_registry_conf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
     &lt;span class="c1"&gt;# Add the API key required by HopsWorks but not configurable through the confluent schema registry client&lt;/span&gt;
-    &lt;span class="n"&gt;headers&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s1"&gt;'Authorization'&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;'ApiKey '&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;conf&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'api'&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="s1"&gt;'key'&lt;/span&gt;&lt;span class="p"&gt;]}&lt;/span&gt;
+    &lt;span class="n"&gt;headers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s1"&gt;'Authorization'&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;'ApiKey '&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;conf&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'api'&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="s1"&gt;'key'&lt;/span&gt;&lt;span class="p"&gt;]}&lt;/span&gt;
     &lt;span class="n"&gt;schema_registry_client&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_rest_client&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;session&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;headers&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;update&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;headers&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
     &lt;span class="c1"&gt;# Initialize the avro serializer for the value using the schema&lt;/span&gt;
@@ -647,12 +668,12 @@ as the one in the producer code. The rest is similar but works in the other dire
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;confluent_kafka.schema_registry&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;SchemaRegistryClient&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;confluent_kafka.schema_registry.avro&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;AvroDeserializer&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;confluent_kafka.serialization&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;StringDeserializer&lt;/span&gt;
-&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;confluent_kafka.schema_registry&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;record_subject_name_strategy&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;datetime&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;datetime&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;timedelta&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;toml&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;argparse&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;collections&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;deque&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;matplotlib.pyplot&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;plt&lt;/span&gt;
+
 
 &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Event&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;object&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
     &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;
@@ -661,7 +682,7 @@ as the one in the producer code. The rest is similar but works in the other dire
     Args:
         id (str): Sensor's id
 
-        timestamp (datetime): timestamp in milliseconds
+        timestamp (datetime): timestamp when the event happened
 
         value (double): Sensor's reading value
 
@@ -687,8 +708,8 @@ as the one in the producer code. The rest is similar but works in the other dire
         &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="kc"&gt;None&lt;/span&gt;
 
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;Event&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;id&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;obj&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'id'&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt;
-                &lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;datetime&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fromtimestamp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;obj&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'timestamp'&lt;/span&gt;&lt;span class="p"&gt;]),&lt;/span&gt;
-                &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;obj&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'value'&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
+                 &lt;span class="n"&gt;timestamp&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;obj&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'timestamp'&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt;
+                 &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;obj&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'value'&lt;/span&gt;&lt;span class="p"&gt;])&lt;/span&gt;
 
 
 &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
@@ -712,8 +733,10 @@ as the one in the producer code. The rest is similar but works in the other dire
       &amp;quot;fields&amp;quot;: [
         {
           &amp;quot;name&amp;quot;: &amp;quot;timestamp&amp;quot;,
-          &amp;quot;type&amp;quot;: &amp;quot;long&amp;quot;,
-          &amp;quot;logicalType&amp;quot;: &amp;quot;timestamp-millis&amp;quot;
+          &amp;quot;type&amp;quot;: {
+            &amp;quot;type&amp;quot;: &amp;quot;long&amp;quot;,
+            &amp;quot;logicalType&amp;quot;: &amp;quot;timestamp-millis&amp;quot;
+          }
         },
         {
           &amp;quot;name&amp;quot;: &amp;quot;id&amp;quot;,
@@ -736,7 +759,7 @@ as the one in the producer code. The rest is similar but works in the other dire
     &lt;span class="n"&gt;schema_registry_client&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SchemaRegistryClient&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;schema_registry_conf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
     &lt;span class="c1"&gt;# Add the API key required by HopsWorks but not configurable through the confluent schema registry client&lt;/span&gt;
-    &lt;span class="n"&gt;headers&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s1"&gt;'Authorization'&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;'ApiKey '&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;conf&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'api'&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="s1"&gt;'key'&lt;/span&gt;&lt;span class="p"&gt;]}&lt;/span&gt;
+    &lt;span class="n"&gt;headers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s1"&gt;'Authorization'&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;'ApiKey '&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;conf&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'api'&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="s1"&gt;'key'&lt;/span&gt;&lt;span class="p"&gt;]}&lt;/span&gt;
     &lt;span class="n"&gt;schema_registry_client&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_rest_client&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;session&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;headers&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;update&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;headers&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
     &lt;span class="c1"&gt;# Initialize the avro deserializer for the value using the schema&lt;/span&gt;
@@ -764,7 +787,7 @@ as the one in the producer code. The rest is similar but works in the other dire
     &lt;span class="n"&gt;consumer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;subscribe&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;conf&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;'kafka'&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="s1"&gt;'topic'&lt;/span&gt;&lt;span class="p"&gt;]])&lt;/span&gt;
 
     &lt;span class="c1"&gt;# a list of buffers to store data for plotting&lt;/span&gt;
-    &lt;span class="n"&gt;MAX_BUFFER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1000&lt;/span&gt; &lt;span class="c1"&gt;# max events to store for plotting, then graph will scroll&lt;/span&gt;
+    &lt;span class="n"&gt;MAX_BUFFER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1000&lt;/span&gt;  &lt;span class="c1"&gt;# max events to store for plotting, then graph will scroll&lt;/span&gt;
     &lt;span class="n"&gt;buffer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;deque&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;maxlen&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;MAX_BUFFER&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="nb"&gt;range&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sensors&lt;/span&gt;&lt;span class="p"&gt;)]&lt;/span&gt;
 
     &lt;span class="c1"&gt;# Plotting&lt;/span&gt;

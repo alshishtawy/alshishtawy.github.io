@@ -59,8 +59,10 @@ For more details about declaring Avro schemas and supported data types, check th
   <span class="nt">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span>
-      <span class="nt">&quot;logicalType&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp-millis&quot;</span>
+      <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;long&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;logicalType&quot;</span><span class="p">:</span> <span class="s2">&quot;timestamp-millis&quot;</span>
+        <span class="p">}</span>
     <span class="p">},</span>
     <span class="p">{</span>
       <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
@@ -348,7 +350,7 @@ Then initializes a number of sensors to generate data and finally uses the produ
     Args:
         id (str): Sensor's id
 
-        timestamp (datetime): timestamp in milliseconds
+        timestamp (datetime): timestamp when the event happened
 
         value (double): Sensor's reading value
 
@@ -374,7 +376,7 @@ Then initializes a number of sensors to generate data and finally uses the produ
 
     &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="p">),</span>
+                <span class="n">timestamp</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span>
                 <span class="n">value</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
 
@@ -431,8 +433,10 @@ Then initializes a number of sensors to generate data and finally uses the produ
       &quot;fields&quot;: [
         {
           &quot;name&quot;: &quot;timestamp&quot;,
-          &quot;type&quot;: &quot;long&quot;,
-          &quot;logicalType&quot;: &quot;timestamp-millis&quot;
+          &quot;type&quot;: {
+            &quot;type&quot;: &quot;long&quot;,
+            &quot;logicalType&quot;: &quot;timestamp-millis&quot;
+          }
         },
         {
           &quot;name&quot;: &quot;id&quot;,
@@ -455,7 +459,7 @@ Then initializes a number of sensors to generate data and finally uses the produ
     <span class="n">schema_registry_client</span> <span class="o">=</span> <span class="n">SchemaRegistryClient</span><span class="p">(</span><span class="n">schema_registry_conf</span><span class="p">)</span>
 
     <span class="c1"># Add the API key required by HopsWorks but not configurable through the confluent schema registry client</span>
-    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
     <span class="n">schema_registry_client</span><span class="o">.</span><span class="n">_rest_client</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
 
     <span class="c1"># Initialize the avro serializer for the value using the schema</span>
@@ -686,12 +690,12 @@ as the one in the producer code. The rest is similar but works in the other dire
 <span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">SchemaRegistryClient</span>
 <span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry.avro</span> <span class="kn">import</span> <span class="n">AvroDeserializer</span>
 <span class="kn">from</span> <span class="nn">confluent_kafka.serialization</span> <span class="kn">import</span> <span class="n">StringDeserializer</span>
-<span class="kn">from</span> <span class="nn">confluent_kafka.schema_registry</span> <span class="kn">import</span> <span class="n">record_subject_name_strategy</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">import</span> <span class="nn">toml</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
 
 <span class="k">class</span> <span class="nc">Event</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;
@@ -700,7 +704,7 @@ as the one in the producer code. The rest is similar but works in the other dire
     Args:
         id (str): Sensor's id
 
-        timestamp (datetime): timestamp in milliseconds
+        timestamp (datetime): timestamp when the event happened
 
         value (double): Sensor's reading value
 
@@ -726,8 +730,8 @@ as the one in the producer code. The rest is similar but works in the other dire
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">return</span> <span class="n">Event</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">'id'</span><span class="p">],</span>
-                <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s1">'timestamp'</span><span class="p">]),</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">'value'</span><span class="p">])</span>
+                 <span class="n">timestamp</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">'timestamp'</span><span class="p">],</span>
+                 <span class="n">value</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s1">'value'</span><span class="p">])</span>
 
 
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -751,8 +755,10 @@ as the one in the producer code. The rest is similar but works in the other dire
       &quot;fields&quot;: [
         {
           &quot;name&quot;: &quot;timestamp&quot;,
-          &quot;type&quot;: &quot;long&quot;,
-          &quot;logicalType&quot;: &quot;timestamp-millis&quot;
+          &quot;type&quot;: {
+            &quot;type&quot;: &quot;long&quot;,
+            &quot;logicalType&quot;: &quot;timestamp-millis&quot;
+          }
         },
         {
           &quot;name&quot;: &quot;id&quot;,
@@ -775,7 +781,7 @@ as the one in the producer code. The rest is similar but works in the other dire
     <span class="n">schema_registry_client</span> <span class="o">=</span> <span class="n">SchemaRegistryClient</span><span class="p">(</span><span class="n">schema_registry_conf</span><span class="p">)</span>
 
     <span class="c1"># Add the API key required by HopsWorks but not configurable through the confluent schema registry client</span>
-    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'Authorization'</span><span class="p">:</span> <span class="s1">'ApiKey '</span> <span class="o">+</span> <span class="n">conf</span><span class="p">[</span><span class="s1">'api'</span><span class="p">][</span><span class="s1">'key'</span><span class="p">]}</span>
     <span class="n">schema_registry_client</span><span class="o">.</span><span class="n">_rest_client</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
 
     <span class="c1"># Initialize the avro deserializer for the value using the schema</span>
@@ -803,7 +809,7 @@ as the one in the producer code. The rest is similar but works in the other dire
     <span class="n">consumer</span><span class="o">.</span><span class="n">subscribe</span><span class="p">([</span><span class="n">conf</span><span class="p">[</span><span class="s1">'kafka'</span><span class="p">][</span><span class="s1">'topic'</span><span class="p">]])</span>
 
     <span class="c1"># a list of buffers to store data for plotting</span>
-    <span class="n">MAX_BUFFER</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c1"># max events to store for plotting, then graph will scroll</span>
+    <span class="n">MAX_BUFFER</span> <span class="o">=</span> <span class="mi">1000</span>  <span class="c1"># max events to store for plotting, then graph will scroll</span>
     <span class="n">buffer</span> <span class="o">=</span> <span class="p">[</span><span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">MAX_BUFFER</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sensors</span><span class="p">)]</span>
 
     <span class="c1"># Plotting</span>
